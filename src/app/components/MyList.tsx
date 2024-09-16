@@ -1,133 +1,273 @@
-import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaCheck, FaTrashAlt } from 'react-icons/fa';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { FaCheck, FaTimes, FaFilter, FaSort } from 'react-icons/fa';
 
 const MyList = () => {
   const [tasks, setTasks] = useState([]);
-  const [completedTasks, setCompletedTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedCollaborator, setSelectedCollaborator] = useState('');
+  const [editingTaskIndex, setEditingTaskIndex] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filter, setFilter] = useState('Current List');
+  const [sort, setSort] = useState('Newest');
+  const tasksPerPage = 20;
+
+  const newTaskInputRef = useRef(null);
+
+  const collaborators = ['John Doe', 'Jane Smith', 'Ryan Howard', 'Pam Beesly'];
 
   useEffect(() => {
     const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
     setTasks(storedTasks);
-    
-    const storedCompletedTasks = JSON.parse(localStorage.getItem('completedTasks')) || [];
-    setCompletedTasks(storedCompletedTasks);
   }, []);
-  
+
   const addTask = () => {
     if (newTask) {
-      const updatedTasks = [...tasks, { name: newTask, date: selectedDate }];
+      const updatedTasks = [
+        ...tasks,
+        { name: newTask, date: selectedDate, collaborator: selectedCollaborator }
+      ];
       setTasks(updatedTasks);
       localStorage.setItem('tasks', JSON.stringify(updatedTasks));
       setNewTask('');
-      setSelectedDate(new Date());
+      setSelectedDate('');
+      setSelectedCollaborator('');
     }
   };
-  
+
   const completeTask = (taskIndex) => {
-    const task = tasks[taskIndex];
     const updatedTasks = tasks.filter((_, index) => index !== taskIndex);
     setTasks(updatedTasks);
     localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-    
-    const updatedCompletedTasks = [...completedTasks, task];
-    setCompletedTasks(updatedCompletedTasks);
-    localStorage.setItem('completedTasks', JSON.stringify(updatedCompletedTasks));
   };
 
-  const deleteTask = (taskIndex) => {
-    const updatedCompletedTasks = completedTasks.filter((_, index) => index !== taskIndex);
-    setCompletedTasks(updatedCompletedTasks);
-    localStorage.setItem('completedTasks', JSON.stringify(updatedCompletedTasks));
+  const updateDate = (date, index) => {
+    const updatedTasks = tasks.map((task, i) => 
+      i === index ? { ...task, date } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (event.target.closest('.calendar-container') === null) {
-        setShowCalendar(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const updateCollaborator = (collaborator, index) => {
+    const updatedTasks = tasks.map((task, i) => 
+      i === index ? { ...task, collaborator } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  };
+
+  const paginateTasks = tasks
+    .filter(task => filter === 'Current List' || (filter === 'Completed' && !task.name))
+    .sort((a, b) => (sort === 'Newest' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)))
+    .slice(
+      (currentPage - 1) * tasksPerPage,
+      currentPage * tasksPerPage
+    );
+
+  const totalPages = Math.ceil(tasks.length / tasksPerPage);
+
+  const handleTaskDoubleClick = (index) => {
+    setEditingTaskIndex(index);
+  };
+
+  const handleTaskEdit = (e, index) => {
+    const updatedTasks = tasks.map((task, i) =>
+      i === index ? { ...task, name: e.target.value } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  };
+
+  const handleTaskEditBlur = () => {
+    setEditingTaskIndex(null);
+  };
+
+  const handleTaskEditKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      handleTaskEditBlur(); // Exit edit mode on Enter
+    }
+  };
+
+  const focusNewTaskInput = () => {
+    if (newTaskInputRef.current) {
+      newTaskInputRef.current.focus();
+    }
+  };
 
   return (
-    <div className="flex gap-4 items-stretch">
-      <div className="flex-1 shadow rounded-lg p-10 overflow-hidden">
-        <h3 className="text-xl font-normal mb-4">Add Task</h3>
-        <div className="relative flex-1 min-h-[50px]">
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addTask()}
-            placeholder="Add a new task..."
-            className="w-full p-2 border border-gray-300 rounded"
-          />
-          <FaCalendarAlt
-            className="absolute right-2 top-5 transform -translate-y-1/2 text-teal-500 cursor-pointer text-sm z-0 bg-gray-400"
-            onClick={() => setShowCalendar(!showCalendar)}
-          />
-          {showCalendar && (
-            <div className="calendar-container">
-              <Calendar
-                onChange={setSelectedDate}
-                value={selectedDate}
-                className="custom-calendar"
-              />
-            </div>
-          )}
+    <div className="p-4">
+      <div className="flex justify-between mb-4">
+        <button
+          onClick={() => {
+            focusNewTaskInput();
+          }}
+          className="bg-gray-900 text-white px-4 py-2 rounded"
+        >
+          Add New Task
+        </button>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-1">
+            <FaFilter />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="p-2 border border-gray-300 rounded"
+            >
+              <option value="Current List">Current List</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1">
+            <FaSort />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="p-2 border border-gray-300 rounded"
+            >
+              <option value="Newest">Newest</option>
+              <option value="Oldest">Oldest</option>
+            </select>
+          </div>
         </div>
-        <table className="w-full border-collapse">
-          <tbody>
-            {tasks.map((task, index) => (
-              <tr key={index} className="border-b">
-                <td className="text-center" style={{ width: '8%' }}>
-                  <FaCheck
-                    className="text-green-500 cursor-pointer border border-green-500 rounded-full p-1 text-xl"
-                    onClick={() => completeTask(index)}
-                  />
-                </td>
-                <td style={{ width: '75%' }}>{task.name}</td>
-                <td className="text-center" style={{ width: '17%' }}>
-                  {new Date(task.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short'
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
-      
-      <div className="flex-1 shadow rounded-lg p-10">
-        <h3 className="text-xl font-normal mb-4">Completed Tasks</h3>
-        <table className="w-full border-collapse">
-          <tbody>
-            {completedTasks.map((task, index) => (
-              <tr key={index} className="border-b">
-                <td style={{ width: '75%' }}>{task.name}</td>
-                <td className="text-center" style={{ width: '20%' }}>
-                  {new Date(task.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short'
-                  })}
-                </td>
-                <td className="text-center" style={{ width: '5%' }}>
-                  <FaTrashAlt
-                    className="text-red-500 cursor-pointer border border-gray-500 rounded-full p-1 text-2xl"
-                    onClick={() => deleteTask(index)}
+
+      <table className="w-full border-collapse table-fixed">
+        <thead>
+          <tr>
+            <th className="border border-gray-300 font-normal p-2">Task</th>
+            <th className="border border-gray-300 font-normal p-2">Date</th>
+            <th className="border border-gray-300 font-normal p-2">Collaborator</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-gray-200 p-2 flex items-center gap-1">
+              <input
+                ref={newTaskInputRef}
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                placeholder="Add new task..."
+                className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                style={{ height: '40px' }} // Adjusted height
+              />
+            </td>
+            <td className="border border-gray-300 p-2">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                style={{ height: '40px' }} // Adjusted height
+              />
+            </td>
+            <td className="border border-gray-300 p-2">
+              <select
+                value={selectedCollaborator}
+                onChange={(e) => setSelectedCollaborator(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                style={{ height: '40px' }} // Adjusted height
+              >
+                <option value="">Select collaborator</option>
+                {collaborators.map((collab, index) => (
+                  <option key={index} value={collab}>
+                    {collab}
+                  </option>
+                ))}
+              </select>
+            </td>
+          </tr>
+
+          {paginateTasks.map((task, index) => (
+            <tr key={index} className="h-12">
+              <td
+                className="border border-gray-200 p-2 relative h-full break-words hover:bg-gray-100"
+                onDoubleClick={() => handleTaskDoubleClick(index)}
+              >
+                {editingTaskIndex === index ? (
+                  <input
+                    type="text"
+                    value={task.name}
+                    onChange={(e) => handleTaskEdit(e, index)}
+                    onKeyDown={(e) => handleTaskEditKeyDown(e, index)} // Save on Enter
+                    onBlur={handleTaskEditBlur} // Exit edit mode on blur
+                    className="w-full p-2 border border-gray-300 rounded"
+                    autoFocus
                   />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                ) : (
+                  <>
+                    {task.name}
+                    <FaCheck
+                      className="text-gray-700 bg-gray-200 rounded-full p-1 text-xl cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 hover:opacity-100"
+                      onClick={() => completeTask(index)}
+                    />
+                  </>
+                )}
+              </td>
+
+              <td className="border border-gray-200 p-2 text-center relative hover:bg-gray-100">
+                {task.date ? (
+                  <>
+                    {new Date(task.date).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
+                    <FaTimes
+                      className="text-gray-700 bg-gray-200 rounded-full p-1 text-xl cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 hover:opacity-100"
+                      onClick={() => updateDate('', index)}
+                    />
+                  </>
+                ) : (
+                  <input
+                    type="date"
+                    onChange={(e) => updateDate(e.target.value, index)}
+                    className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                  />
+                )}
+              </td>
+
+              <td className="border border-gray-200 p-2 text-center relative hover:bg-gray-100">
+                {task.collaborator ? (
+                  <>
+                    {task.collaborator}
+                    <FaTimes
+                      className="text-gray-700 bg-gray-200 rounded-full p-1 text-xl cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 hover:opacity-100"
+                      onClick={() => updateCollaborator('', index)}
+                    />
+                  </>
+                ) : (
+                  <select
+                    onChange={(e) => updateCollaborator(e.target.value, index)}
+                    className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                  >
+                    <option value="">Add collaborator</option>
+                    {collaborators.map((collab, idx) => (
+                      <option key={idx} value={collab}>
+                        {collab}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex justify-center items-center mt-4">
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-4 py-2 mx-1 rounded ${
+              currentPage === i + 1 ? 'bg-gray-700 text-white' : 'bg-gray-200'
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
       </div>
     </div>
   );

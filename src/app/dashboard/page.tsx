@@ -20,7 +20,7 @@ export default function Dashboard() {
   return (
     <div className="flex">
       <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} onComponentChange={handleComponentChange} />
-      <div className={`flex-1 ${isOpen ? 'ml-64' : 'ml-16'} transition-all duration-300`}>
+      <div className={`flex-auto ${isOpen ? 'ml-64 mt-16' : 'ml-16 mt-16'} transition-all duration-300`}>
         <Header isOpen={isOpen} />
         <DashboardContent selectedComponent={selectedComponent} />
       </div>
