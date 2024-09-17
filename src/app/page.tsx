@@ -1,5 +1,3 @@
-import LoginForm from "./components/LoginForm";
-
 export default function Home() {
-  return <LoginForm />;
+  return <h2>Weva Workspace</h2>;
 }

@@ -1,28 +1,53 @@
 "use client";
+import { useState } from "react";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import MyList from "../components/MyList";
+import ProjectList from "../components/ProjectList";
+import DashboardContent from "../components/DashboardContent";
+import Team from "../components/Teams";
+import Members from "../components/Members";
+import Announcement from "../components/Announcement";
+import Settings from "../components/Settings";
 
-import { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
-import DashboardContent from '../components/DashboardContent';
-
-export default function Dashboard() {
-  const [isOpen, setIsOpen] = useState(true);
+export default function DashboardPage() {
   const [selectedComponent, setSelectedComponent] = useState("Dashboard");
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleComponentChange = (componentName) => {
-    setSelectedComponent(componentName);
+  const renderContent = () => {
+    switch (selectedComponent) {
+      case "Dashboard":
+        return <DashboardContent />;
+      case "MyList":
+        return <MyList />;
+      case "Projects":
+        return <ProjectList />;
+      case "Teams":
+        return <Team />;
+      case "Members":
+        return <Members />;
+      case "Announcement":
+        return <Announcement />;
+      case "Settings":
+        return <Settings />;
+      default:
+        return <DashboardContent />;
+    }
   };
 
   return (
     <div className="flex">
-      <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} onComponentChange={handleComponentChange} />
-      <div className={`flex-auto ${isOpen ? 'ml-64 mt-16' : 'ml-16 mt-16'} transition-all duration-300`}>
-        <Header isOpen={isOpen} />
-        <DashboardContent selectedComponent={selectedComponent} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        onComponentChange={(component) => setSelectedComponent(component)}
+      />
+      <div className={`flex-auto ${isSidebarOpen ? "ml-64" : "ml-16"} mt-16`}>
+        <Header isOpen={isSidebarOpen} />
+        <div className="p-6 flex-1 overflow-auto">{renderContent()}</div>
       </div>
     </div>
   );

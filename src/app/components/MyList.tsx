@@ -136,7 +136,7 @@ const MyList = () => {
         <thead>
           <tr>
             <th className="border border-gray-300 font-normal p-2">Task</th>
-            <th className="border border-gray-300 font-normal p-2">Date</th>
+            <th className="border border-gray-300 font-normal p-2">Due Date</th>
             <th className="border border-gray-300 font-normal p-2">Collaborator</th>
           </tr>
         </thead>
