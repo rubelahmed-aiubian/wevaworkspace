@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
-import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useSidebar } from "./SidebarContext";
+import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
 
-export default function Header({ isOpen }: { isOpen: boolean }) {
+export default function Header() {
+  const router = useRouter();
+  const { isSidebarOpen } = useSidebar();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const router = useRouter(); 
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -24,8 +26,8 @@ export default function Header({ isOpen }: { isOpen: boolean }) {
     <div
       className={`fixed top-0 right-0 h-16 bg-white shadow-md flex justify-between items-center px-4 transition-all duration-300`}
       style={{
-        width: isOpen ? 'calc(100% - 16rem)' : 'calc(100% - 4rem)',
-        marginLeft: isOpen ? '16rem' : '4rem',
+        width: isSidebarOpen ? "calc(100% - 16rem)" : "calc(100% - 4rem)",
+        marginLeft: isSidebarOpen ? "16rem" : "4rem",
       }}
     >
       <div className="relative w-full max-w-md">
@@ -41,7 +43,10 @@ export default function Header({ isOpen }: { isOpen: boolean }) {
         <FaBell className="text-gray-600 text-lg cursor-pointer" />
 
         <div className="relative">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={toggleMenu}>
+          <div
+            className="flex items-center space-x-2 cursor-pointer"
+            onClick={toggleMenu}
+          >
             <img
               src="/images/ryan.png"
               alt="User"

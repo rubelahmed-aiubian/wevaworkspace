@@ -1,46 +1,36 @@
 "use client";
-import { useState } from "react";
-import { usePathname, notFound } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
+import Teams from "@/components/Teams";
 import MyList from "@/components/MyList";
-import ProjectList from "@/components/ProjectList";
-import DashboardContent from "@/components/DashboardContent";
-import Team from "@/components/Teams";
-import Members from "@/components/Members";
-import Announcement from "@/components/Announcement";
-import Settings from "@/components/Settings";
 import Profile from "@/components/Profile";
+import Members from "@/components/Members";
+import Settings from "@/components/Settings";
+import { usePathname } from "next/navigation";
+import ProjectList from "@/components/ProjectList";
+import Announcement from "@/components/Announcement";
+import { useSidebar } from "@/components/SidebarContext";
+import DashboardContent from "@/components/DashboardContent";
 
-const components = {
-  dashboard: DashboardContent,
-  mylist: MyList,
-  projects: ProjectList,
-  teams: Team,
-  members: Members,
-  announcement: Announcement,
-  settings: Settings,
-  profile: Profile,
+const componentMapping = {
+  dashboard: { component: DashboardContent, title: "Dashboard" },
+  mylist: { component: MyList, title: "My List" },
+  projects: { component: ProjectList, title: "Projects" },
+  teams: { component: Teams, title: "Teams" },
+  members: { component: Members, title: "Members" },
+  announcement: { component: Announcement, title: "Announcement" },
+  settings: { component: Settings, title: "Settings" },
+  profile: { component: Profile, title: "Profile" },
 };
 
 export default function Page() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { isSidebarOpen } = useSidebar();
   const pathname = usePathname();
-  const Component = components[pathname?.slice(1).toLowerCase()] || notFound;
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const pathKey = pathname?.slice(1).toLowerCase();
+  const { component: Component, title } = componentMapping[pathKey] || { component: DashboardContent, title: "Dashboard" };
 
   return (
-    <div className="flex">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className={`flex-auto ${isSidebarOpen ? "ml-64" : "ml-16"} mt-16`}>
-        <Header isOpen={isSidebarOpen} />
-        <div className="p-6 flex-1 overflow-auto">
-          <Component />
-        </div>
-      </div>
+    <div className={`flex-auto ${isSidebarOpen ? "ml-64" : "ml-16"} mt-16 transition-all duration-300`}>
+      <h1 className="text-2xl font-bold mb-4">{title}</h1>
+      <Component />
     </div>
   );
 }
