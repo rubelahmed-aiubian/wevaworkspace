@@ -1,4 +1,4 @@
-const DashboardContent = () => {
+export default function DashboardContent (){
   return (
     <div className="p-6 flex-1 overflow-auto">
       <div>
@@ -63,5 +63,3 @@ const DashboardContent = () => {
     </div>
   );
 };
-
-export default DashboardContent;

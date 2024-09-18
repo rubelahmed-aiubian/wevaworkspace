@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaFilter, FaSort } from 'react-icons/fa';
 import Link from 'next/link';
 
-const ProjectList = () => {
+export default function ProjectList(){
   const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState('Draft');
   const [sort, setSort] = useState('Newest');
@@ -133,5 +133,3 @@ const ProjectList = () => {
     </div>
   );
 };
-
-export default ProjectList;

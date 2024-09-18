@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const LoginForm = () => {
+export default function LoginForm(){
   return (
     <div className="flex items-center justify-center bg-gray-800 w-full h-screen">
       <div className="bg-white p-6 pt-16 rounded-lg shadow-lg sm:w-1/4 relative">
@@ -11,7 +11,7 @@ const LoginForm = () => {
               src="/images/logo.png"
               alt="Logo"
               width={80}
-              height={80}
+              height={60}
               className="object-contain"
             />
           </div>
@@ -52,5 +52,3 @@ const LoginForm = () => {
     </div>
   );
 };
-
-export default LoginForm;

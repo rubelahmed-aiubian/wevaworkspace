@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaCheck, FaTimes, FaFilter, FaSort } from 'react-icons/fa';
 
-const MyList = () => {
+export default function MyList (){
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -272,5 +272,3 @@ const MyList = () => {
     </div>
   );
 };
-
-export default MyList;

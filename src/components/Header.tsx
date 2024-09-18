@@ -1,10 +1,11 @@
-'use client';
+"use client";
+import { useState } from "react";
+import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
-import { useState } from 'react';
-import { FaSearch, FaBell, FaChevronDown } from 'react-icons/fa';
-
-const Header = ({ isOpen }: { isOpen: boolean }) => {
+export default function Header({ isOpen }: { isOpen: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter(); 
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,11 +15,18 @@ const Header = ({ isOpen }: { isOpen: boolean }) => {
     setIsMenuOpen(false);
   };
 
+  const handleProfileClick = () => {
+    router.push("/profile");
+    closeMenu();
+  };
+
   return (
     <div
-      className={`fixed top-0 right-0 h-16 bg-white shadow-md flex justify-between items-center px-4 transition-all duration-300 ${
-        isOpen ? 'w-[80%]' : 'w-[95%]'
-      }`}
+      className={`fixed top-0 right-0 h-16 bg-white shadow-md flex justify-between items-center px-4 transition-all duration-300`}
+      style={{
+        width: isOpen ? 'calc(100% - 16rem)' : 'calc(100% - 4rem)',
+        marginLeft: isOpen ? '16rem' : '4rem',
+      }}
     >
       <div className="relative w-full max-w-md">
         <FaSearch className="absolute top-1 left-3 text-gray-500" />
@@ -49,8 +57,15 @@ const Header = ({ isOpen }: { isOpen: boolean }) => {
               onClick={closeMenu}
             >
               <ul className="py-2">
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Profile</li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Log Out</li>
+                <li
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={handleProfileClick}
+                >
+                  Profile
+                </li>
+                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  Log Out
+                </li>
               </ul>
             </div>
           )}
@@ -59,6 +74,4 @@ const Header = ({ isOpen }: { isOpen: boolean }) => {
       {isMenuOpen && <div className="fixed inset-0" onClick={closeMenu}></div>}
     </div>
   );
-};
-
-export default Header;
+}
