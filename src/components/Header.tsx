@@ -18,7 +18,8 @@ export default function Header() {
   };
 
   const handleProfileClick = () => {
-    router.push("/profile");
+    // Push the profile route within the dashboard context
+    router.push("/dashboard/profile");
     closeMenu();
   };
 

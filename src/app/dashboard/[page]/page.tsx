@@ -1,17 +1,16 @@
 "use client";
 import Teams from "@/components/Teams";
 import MyList from "@/components/MyList";
-import Profile from "@/components/Profile";
+import ProjectList from "@/components/ProjectList";
 import Members from "@/components/Members";
+import Announcement from "@/components/Announcement";
 import Settings from "@/components/Settings";
 import { usePathname } from "next/navigation";
-import ProjectList from "@/components/ProjectList";
-import Announcement from "@/components/Announcement";
 import { useSidebar } from "@/components/SidebarContext";
 import DashboardContent from "@/components/DashboardContent";
+import Profile from "@/components/Profile";
 
 const componentMapping = {
-  dashboard: { component: DashboardContent, title: "Dashboard" },
   mylist: { component: MyList, title: "My List" },
   projects: { component: ProjectList, title: "Projects" },
   teams: { component: Teams, title: "Teams" },
@@ -24,7 +23,7 @@ const componentMapping = {
 export default function Page() {
   const { isSidebarOpen } = useSidebar();
   const pathname = usePathname();
-  const pathKey = pathname?.slice(1).toLowerCase();
+  const pathKey = pathname?.split("/")[2]?.toLowerCase();
   const { component: Component, title } = componentMapping[pathKey] || { component: DashboardContent, title: "Dashboard" };
 
   return (

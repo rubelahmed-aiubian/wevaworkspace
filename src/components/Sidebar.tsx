@@ -17,7 +17,10 @@ export default function Sidebar() {
   const { isSidebarOpen, toggleSidebar } = useSidebar();
 
   const handleNavigation = (path: string) => {
-    router.push(`/${path}`);
+    if(path === "dashboard"){router.push(`/${path}`)}
+    else{
+      router.push(`/dashboard/${path}`);
+    }
   };
 
   return (
@@ -41,13 +44,13 @@ export default function Sidebar() {
       <nav className="flex-1 mt-4">
         <ul>
           {[
-            "dashboard",
-            "mylist",
-            "projects",
-            "teams",
-            "members",
-            "announcement",
-          ].map((path, index) => (
+            { path: "dashboard", icon: FaTachometerAlt, label: "Dashboard" },
+            { path: "mylist", icon: FaList, label: "My List" },
+            { path: "projects", icon: FaProjectDiagram, label: "Projects" },
+            { path: "teams", icon: FaUsers, label: "Teams" },
+            { path: "members", icon: FaUserFriends, label: "Members" },
+            { path: "announcement", icon: FaBell, label: "Announcement" },
+          ].map((item, index) => (
             <li
               key={index}
               className={`flex items-center p-4 hover:bg-gray-700 cursor-pointer ${
@@ -55,18 +58,11 @@ export default function Sidebar() {
               }`}
             >
               <button
-                onClick={() => handleNavigation(path)}
-                className={`flex items-center ${
-                  isSidebarOpen ? "hover:bg-gray-700" : ""
-                } w-full text-left`}
+                onClick={() => handleNavigation(item.path)}
+                className={`flex items-center w-full text-left`}
               >
-                {path === "dashboard" && <FaTachometerAlt className="mr-3" />}
-                {path === "mylist" && <FaList className="mr-3" />}
-                {path === "projects" && <FaProjectDiagram className="mr-3" />}
-                {path === "teams" && <FaUsers className="mr-3" />}
-                {path === "members" && <FaUserFriends className="mr-3" />}
-                {path === "announcement" && <FaBell className="mr-3" />}
-                {isSidebarOpen && path.charAt(0).toUpperCase() + path.slice(1)}
+                <item.icon className="mr-3" />
+                {isSidebarOpen && item.label}
               </button>
             </li>
           ))}
@@ -79,9 +75,7 @@ export default function Sidebar() {
       >
         <button
           onClick={() => handleNavigation("settings")}
-          className={`flex items-center ${
-            isSidebarOpen ? "hover:bg-gray-700" : ""
-          } w-full text-left`}
+          className={`flex items-center w-full text-left`}
         >
           <FaCog className="mr-2" />
           {isSidebarOpen && "Settings"}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaCheck, FaTimes, FaFilter, FaSort } from 'react-icons/fa';
 
-export default function MyList (){
+export default function MyList() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -16,9 +16,20 @@ export default function MyList (){
 
   const collaborators = ['John Doe', 'Jane Smith', 'Ryan Howard', 'Pam Beesly'];
 
+  // Fetch tasks from the database here instead of localStorage (e.g., API call)
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    setTasks(storedTasks);
+    // Example: fetch tasks from database and setTasks
+    const fetchTasks = async () => {
+      // Placeholder for actual API call
+      const fetchedTasks = [
+        // Sample data structure
+        { name: 'Sample Task 1', date: '2024-09-18', collaborator: 'John Doe' },
+        { name: 'Sample Task 2', date: '2024-09-19', collaborator: 'Jane Smith' },
+      ];
+      setTasks(fetchedTasks);
+    };
+
+    fetchTasks();
   }, []);
 
   const addTask = () => {
@@ -28,7 +39,8 @@ export default function MyList (){
         { name: newTask, date: selectedDate, collaborator: selectedCollaborator }
       ];
       setTasks(updatedTasks);
-      localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+
+      // Save new task to the database here (e.g., API call)
       setNewTask('');
       setSelectedDate('');
       setSelectedCollaborator('');
@@ -38,32 +50,32 @@ export default function MyList (){
   const completeTask = (taskIndex) => {
     const updatedTasks = tasks.filter((_, index) => index !== taskIndex);
     setTasks(updatedTasks);
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+
+    // Update the task status in the database (e.g., API call)
   };
 
   const updateDate = (date, index) => {
-    const updatedTasks = tasks.map((task, i) => 
+    const updatedTasks = tasks.map((task, i) =>
       i === index ? { ...task, date } : task
     );
     setTasks(updatedTasks);
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+
+    // Update the task date in the database (e.g., API call)
   };
 
   const updateCollaborator = (collaborator, index) => {
-    const updatedTasks = tasks.map((task, i) => 
+    const updatedTasks = tasks.map((task, i) =>
       i === index ? { ...task, collaborator } : task
     );
     setTasks(updatedTasks);
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+
+    // Update the task collaborator in the database (e.g., API call)
   };
 
   const paginateTasks = tasks
-    .filter(task => filter === 'Current List' || (filter === 'Completed' && !task.name))
+    .filter((task) => filter === 'Current List' || (filter === 'Completed' && !task.name))
     .sort((a, b) => (sort === 'Newest' ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)))
-    .slice(
-      (currentPage - 1) * tasksPerPage,
-      currentPage * tasksPerPage
-    );
+    .slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage);
 
   const totalPages = Math.ceil(tasks.length / tasksPerPage);
 
@@ -76,7 +88,8 @@ export default function MyList (){
       i === index ? { ...task, name: e.target.value } : task
     );
     setTasks(updatedTasks);
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+
+    // Update the task name in the database (e.g., API call)
   };
 
   const handleTaskEditBlur = () => {
@@ -99,9 +112,7 @@ export default function MyList (){
     <div className="p-4">
       <div className="flex justify-between mb-4">
         <button
-          onClick={() => {
-            focusNewTaskInput();
-          }}
+          onClick={focusNewTaskInput}
           className="bg-gray-900 text-white px-4 py-2 rounded"
         >
           Add New Task
@@ -151,7 +162,7 @@ export default function MyList (){
                 onKeyDown={(e) => e.key === 'Enter' && addTask()}
                 placeholder="Add new task..."
                 className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
-                style={{ height: '40px' }} // Adjusted height
+                style={{ height: '40px' }}
               />
             </td>
             <td className="border border-gray-300 p-2">
@@ -160,7 +171,7 @@ export default function MyList (){
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
-                style={{ height: '40px' }} // Adjusted height
+                style={{ height: '40px' }}
               />
             </td>
             <td className="border border-gray-300 p-2">
@@ -168,7 +179,7 @@ export default function MyList (){
                 value={selectedCollaborator}
                 onChange={(e) => setSelectedCollaborator(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
-                style={{ height: '40px' }} // Adjusted height
+                style={{ height: '40px' }}
               >
                 <option value="">Select collaborator</option>
                 {collaborators.map((collab, index) => (
@@ -191,8 +202,8 @@ export default function MyList (){
                     type="text"
                     value={task.name}
                     onChange={(e) => handleTaskEdit(e, index)}
-                    onKeyDown={(e) => handleTaskEditKeyDown(e, index)} // Save on Enter
-                    onBlur={handleTaskEditBlur} // Exit edit mode on blur
+                    onKeyDown={(e) => handleTaskEditKeyDown(e, index)}
+                    onBlur={handleTaskEditBlur}
                     className="w-full p-2 border border-gray-300 rounded"
                     autoFocus
                   />
@@ -223,26 +234,19 @@ export default function MyList (){
                   <input
                     type="date"
                     onChange={(e) => updateDate(e.target.value, index)}
-                    className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                    className="p-2 border border-gray-300 rounded w-full"
                   />
                 )}
               </td>
 
-              <td className="border border-gray-200 p-2 text-center relative hover:bg-gray-100">
-                {task.collaborator ? (
-                  <>
-                    {task.collaborator}
-                    <FaTimes
-                      className="text-gray-700 bg-gray-200 rounded-full p-1 text-xl cursor-pointer absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 hover:opacity-100"
-                      onClick={() => updateCollaborator('', index)}
-                    />
-                  </>
-                ) : (
+              <td className="border border-gray-200 p-2 relative hover:bg-gray-100">
+                {task.collaborator || (
                   <select
+                    value={task.collaborator}
                     onChange={(e) => updateCollaborator(e.target.value, index)}
-                    className="w-full p-2 border border-gray-300 rounded focus:border-gray-400"
+                    className="w-full p-2 border border-gray-300 rounded"
                   >
-                    <option value="">Add collaborator</option>
+                    <option value="">Select collaborator</option>
                     {collaborators.map((collab, idx) => (
                       <option key={idx} value={collab}>
                         {collab}
@@ -256,19 +260,27 @@ export default function MyList (){
         </tbody>
       </table>
 
-      <div className="flex justify-center items-center mt-4">
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`px-4 py-2 mx-1 rounded ${
-              currentPage === i + 1 ? 'bg-gray-700 text-white' : 'bg-gray-200'
-            }`}
-          >
-            {i + 1}
-          </button>
-        ))}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(currentPage - 1)}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(currentPage + 1)}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
-};
+}
