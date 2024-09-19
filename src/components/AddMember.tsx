@@ -1,103 +1,211 @@
 "use client";
 
-import React, { useState } from 'react';
-import Swal from 'sweetalert2';
+import React, { useState } from "react";
+import Swal from "sweetalert2";
+import { db } from "../utils/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
-export default function AddMember({ onClose }) {
-  const [id, setId] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [position, setPosition] = useState('');
+export default function AddMember({ onClose, onMemberAdded }) {
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [position, setPosition] = useState("");
+  const [errors, setErrors] = useState({
+    id: false,
+    name: false,
+    email: false,
+    position: false,
+    emailExists: false,
+  });
 
-  const handleAddMember = () => {
+  const validateFields = async () => {
+    const newErrors = {
+      id: !id.trim(),
+      name: !name.trim(),
+      email: !email.trim() || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email),
+      position: !position.trim(),
+      emailExists: false,
+    };
+
+    // Check if the email is already registered in Firestore
+    if (!newErrors.email) {
+      const emailQuery = query(
+        collection(db, "members"),
+        where("email", "==", email)
+      );
+      const querySnapshot = await getDocs(emailQuery);
+      if (!querySnapshot.empty) {
+        newErrors.emailExists = true;
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => !error);
+  };
+
+  const handleAddMember = async () => {
+    const isValid = await validateFields();
+
+    if (!isValid) {
+      return;
+    }
+
+    // Fire SweetAlert for confirmation
     Swal.fire({
-      title: 'Are you sure?',
+      title: "Are you sure?",
+      width: 400,
       text: "You want to add this member!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, add it!'
-    }).then((result) => {
+      confirmButtonColor: "#02122b",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Confirm",
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        // Handle member addition logic here
-        Swal.fire(
-          'Added!',
-          'The member has been added.',
-          'success'
-        );
-        onClose(); // Close the modal after adding member
+        try {
+          // Add the new member to Firestore
+          await addDoc(collection(db, "members"), {
+            id,
+            name,
+            email,
+            position,
+          });
+
+          Swal.fire({
+            title: "Success",
+            text: "Member has been added successfully!",
+            width: 400,
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: true,
+            confirmButtonColor: "#02122b",
+            confirmButtonText: "OK",
+          }).then(() => {
+            if (onMemberAdded) {
+              onMemberAdded(); // Call the refresh function passed as a prop
+            }
+            onClose();
+          });
+        } catch (error) {
+          console.error("Error adding member:", error);
+          Swal.fire({
+            title: "Error",
+            text: "Failed to add member.",
+            icon: "error",
+            confirmButtonColor: "#02122b",
+          });
+        }
       }
     });
   };
 
+  const handleInputChange = (setter, field) => (e) => {
+    setter(e.target.value);
+    if (errors[field]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [field]: false,
+        emailExists: field === "email" ? false : prevErrors.emailExists,
+      }));
+    }
+  };
+
   const handleCancel = () => {
-    onClose(); // Close the modal without adding a member
+    onClose();
   };
 
   return (
     <>
-      <div className="fixed inset-0 bg-gray-600 opacity-50 z-40" onClick={handleCancel}></div>
+      <div
+        className="fixed inset-0 bg-gray-800 opacity-70 z-40"
+        onClick={handleCancel}
+      ></div>
       <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md relative">
-          <div className="p-6">
-            <h2 className="text-md font-semibold mb-4 text-center">Add New Member</h2>
+          <div className="p-8">
+            <h2 className="text-md font-semibold mb-4 text-center">
+              Add New Member
+            </h2>
+
             <div className="mb-4">
               <input
                 type="text"
                 value={id}
-                onChange={(e) => setId(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded"
+                onChange={handleInputChange(setId, "id")}
+                className={`mt-1 block w-full p-2 border ${
+                  errors.id ? "border-red-500" : "border-gray-300"
+                } rounded`}
                 placeholder="Enter ID"
               />
             </div>
+
             <div className="mb-4">
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded"
+                onChange={handleInputChange(setName, "name")}
+                className={`mt-1 block w-full p-2 border ${
+                  errors.name ? "border-red-500" : "border-gray-300"
+                } rounded`}
                 placeholder="Enter Name"
               />
             </div>
+
             <div className="mb-4">
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded"
+                onChange={handleInputChange(setEmail, "email")}
+                className={`mt-1 block w-full p-2 border ${
+                  errors.email || errors.emailExists
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded`}
                 placeholder="Enter Email"
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm">Invalid email format</p>
+              )}
+              {errors.emailExists && (
+                <p className="text-red-500 text-sm">
+                  Email is already registered
+                </p>
+              )}
             </div>
+
             <div className="mb-4">
               <select
                 value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded"
+                onChange={handleInputChange(setPosition, "position")}
+                className={`mt-1 block w-full p-2 border ${
+                  errors.position ? "border-red-500" : "border-gray-300"
+                } rounded`}
               >
                 <option value="">Select Position</option>
-                <option value="Project Manager">Project Manager</option>
-                <option value="Developer">Developer</option>
-                <option value="Employee">Employee</option>
                 <option value="Admin">Admin</option>
+                <option value="Employee">Employee</option>
+                <option value="Developer">Developer</option>
+                <option value="Project Manager">Project Manager</option>
               </select>
             </div>
+
             <div className="flex justify-center gap-4 mb-4">
               <button
                 onClick={handleAddMember}
-                className="bg-teal-500 text-white px-4 py-2 rounded"
+                className="bg-gray-800 text-white px-4 py-2 rounded"
               >
                 Add Member
               </button>
               <button
                 onClick={handleCancel}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
+                className="bg-red-500 text-white px-4 py-2 rounded"
               >
                 Cancel
               </button>
             </div>
+
             <p className="text-sm text-gray-500 text-center">
-              Registered members will generate a password when they log in.
+              Registered members will generate a password during log in.
             </p>
           </div>
         </div>
