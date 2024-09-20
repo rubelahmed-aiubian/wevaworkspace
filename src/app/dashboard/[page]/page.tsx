@@ -1,14 +1,14 @@
 "use client";
-import Teams from "@/components/Teams";
-import MyList from "@/components/MyList";
-import ProjectList from "@/components/ProjectList";
-import Members from "@/components/Members";
-import Announcement from "@/components/Announcement";
-import Settings from "@/components/Settings";
+import Teams from "@/components/dashboard/Teams";
+import MyList from "@/components/dashboard/MyList";
+import ProjectList from "@/components/dashboard/ProjectList";
+import Members from "@/components/dashboard/Members";
+import Announcement from "@/components/dashboard/Announcement";
+import Settings from "@/components/dashboard/Settings";
 import { usePathname } from "next/navigation";
-import { useSidebar } from "@/components/SidebarContext";
-import DashboardContent from "@/components/DashboardContent";
-import Profile from "@/components/Profile";
+import { useSidebar } from "@/components/common/SidebarContext";
+import DashboardContent from "@/components/dashboard/DashboardContent";
+import Profile from "@/components/dashboard/Profile";
 
 const componentMapping = {
   mylist: { component: MyList, title: "My List" },

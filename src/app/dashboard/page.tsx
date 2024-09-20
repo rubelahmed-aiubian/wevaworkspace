@@ -1,6 +1,6 @@
 "use client";
-import { useSidebar } from "@/components/SidebarContext";
-import DashboardContent from "@/components/DashboardContent";
+import { useSidebar } from "@/components/common/SidebarContext";
+import DashboardContent from "@/components/dashboard/DashboardContent";
 
 export default function DashboardPage() {
   const { isSidebarOpen } = useSidebar();

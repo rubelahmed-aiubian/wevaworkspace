@@ -55,7 +55,7 @@ export default function Members() {
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-gray-900 text-white px-4 py-2 rounded"
-          disabled={loading}
+          // disabled={loading}
         >
           Add Member
         </button>

@@ -2,11 +2,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
 import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
+import { auth } from "@/utils/firebase";
+import { signOut } from "firebase/auth";
 
 export default function Header() {
   const router = useRouter();
   const { isSidebarOpen } = useSidebar();
+  const { userData } = useAuth(); // Access userData from context
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -18,11 +22,20 @@ export default function Header() {
   };
 
   const handleProfileClick = () => {
-    // Push the profile route within the dashboard context
     router.push("/dashboard/profile");
     closeMenu();
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  // Add a check to ensure userData exists before rendering user details
   return (
     <div
       className={`fixed top-0 right-0 h-16 bg-white shadow-md flex justify-between items-center px-4 transition-all duration-300`}
@@ -48,12 +61,15 @@ export default function Header() {
             className="flex items-center space-x-2 cursor-pointer"
             onClick={toggleMenu}
           >
+            {/* Ensure userData exists before rendering the image and name */}
             <img
-              src="/images/ryan.png"
+              src={userData?.photo || "/images/user.png"}
               alt="User"
               className="w-8 h-8 rounded-full object-cover"
             />
-            <span className="text-gray-700 font-semibold">Ryan</span>
+            <span className="text-gray-700 font-semibold">
+              {userData?.name || "User"}
+            </span>
             <FaChevronDown className="text-gray-600" />
           </div>
 
@@ -69,7 +85,10 @@ export default function Header() {
                 >
                   Profile
                 </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <li
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={handleLogout}
+                >
                   Log Out
                 </li>
               </ul>

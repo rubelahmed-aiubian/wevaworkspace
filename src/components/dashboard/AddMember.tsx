@@ -2,8 +2,20 @@
 
 import React, { useState } from "react";
 import Swal from "sweetalert2";
-import { db } from "../utils/firebase";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { db, auth } from "../../utils/firebase";
+import { collection, query, where, getDocs, addDoc, doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+
+// Function to generate a random password
+const generateRandomPassword = () => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+};
 
 export default function AddMember({ onClose, onMemberAdded }) {
   const [id, setId] = useState("");
@@ -16,6 +28,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
     email: false,
     position: false,
     emailExists: false,
+    idExists: false,
   });
 
   const validateFields = async () => {
@@ -25,6 +38,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
       email: !email.trim() || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email),
       position: !position.trim(),
       emailExists: false,
+      idExists: false,
     };
 
     // Check if the email is already registered in Firestore
@@ -33,9 +47,18 @@ export default function AddMember({ onClose, onMemberAdded }) {
         collection(db, "members"),
         where("email", "==", email)
       );
-      const querySnapshot = await getDocs(emailQuery);
-      if (!querySnapshot.empty) {
+      const emailSnapshot = await getDocs(emailQuery);
+      if (!emailSnapshot.empty) {
         newErrors.emailExists = true;
+      }
+    }
+
+    // Check if the ID is already registered in Firestore
+    if (!newErrors.id) {
+      const idQuery = query(collection(db, "members"), where("id", "==", id));
+      const idSnapshot = await getDocs(idQuery);
+      if (!idSnapshot.empty) {
+        newErrors.idExists = true;
       }
     }
 
@@ -50,6 +73,8 @@ export default function AddMember({ onClose, onMemberAdded }) {
       return;
     }
 
+    const randomPassword = generateRandomPassword();
+
     // Fire SweetAlert for confirmation
     Swal.fire({
       title: "Are you sure?",
@@ -63,17 +88,26 @@ export default function AddMember({ onClose, onMemberAdded }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Add the new member to Firestore
-          await addDoc(collection(db, "members"), {
+          // Register the user in Firebase Authentication with the random password
+          const userCredential = await createUserWithEmailAndPassword(auth, email, randomPassword);
+          const user = userCredential.user;
+
+          // Send email verification to the new user
+          await sendEmailVerification(user);
+
+          // Add member details to Firestore with uid
+          await setDoc(doc(db, "members", user.uid), {
+            uid: user.uid, // Store uid
             id,
             name,
             email,
             position,
+            photo: "", // Keeping this empty as per your earlier implementation
           });
 
           Swal.fire({
             title: "Success",
-            text: "Member has been added successfully!",
+            text: "Member has been added successfully! A verification email has been sent.",
             width: 400,
             timer: 2000,
             timerProgressBar: true,
@@ -105,6 +139,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
       setErrors((prevErrors) => ({
         ...prevErrors,
         [field]: false,
+        idExists: field === "id" ? false : prevErrors.idExists,
         emailExists: field === "email" ? false : prevErrors.emailExists,
       }));
     }
@@ -133,10 +168,13 @@ export default function AddMember({ onClose, onMemberAdded }) {
                 value={id}
                 onChange={handleInputChange(setId, "id")}
                 className={`mt-1 block w-full p-2 border ${
-                  errors.id ? "border-red-500" : "border-gray-300"
+                  errors.id || errors.idExists ? "border-red-500" : "border-gray-300"
                 } rounded`}
                 placeholder="Enter ID"
               />
+              {errors.idExists && (
+                <p className="text-red-500 text-sm">ID is already registered</p>
+              )}
             </div>
 
             <div className="mb-4">
@@ -205,7 +243,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
             </div>
 
             <p className="text-sm text-gray-500 text-center">
-              Registered members will generate a password during log in.
+              Registered members will receive an email verification link.
             </p>
           </div>
         </div>
