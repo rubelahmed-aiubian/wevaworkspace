@@ -2,20 +2,11 @@
 
 import React, { useState } from "react";
 import Swal from "sweetalert2";
-import { db, auth } from "../../utils/firebase";
-import { collection, query, where, getDocs, addDoc, doc, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { db } from "../../utils/firebase";
+import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 
-// Function to generate a random password
-const generateRandomPassword = () => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-};
+// Function to validate email format
+const validateEmail = (email) => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
 
 export default function AddMember({ onClose, onMemberAdded }) {
   const [id, setId] = useState("");
@@ -35,7 +26,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
     const newErrors = {
       id: !id.trim(),
       name: !name.trim(),
-      email: !email.trim() || !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email),
+      email: !email.trim() || !validateEmail(email),
       position: !position.trim(),
       emailExists: false,
       idExists: false,
@@ -68,12 +59,9 @@ export default function AddMember({ onClose, onMemberAdded }) {
 
   const handleAddMember = async () => {
     const isValid = await validateFields();
-
     if (!isValid) {
       return;
     }
-
-    const randomPassword = generateRandomPassword();
 
     // Fire SweetAlert for confirmation
     Swal.fire({
@@ -88,26 +76,19 @@ export default function AddMember({ onClose, onMemberAdded }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Register the user in Firebase Authentication with the random password
-          const userCredential = await createUserWithEmailAndPassword(auth, email, randomPassword);
-          const user = userCredential.user;
-
-          // Send email verification to the new user
-          await sendEmailVerification(user);
-
-          // Add member details to Firestore with uid
-          await setDoc(doc(db, "members", user.uid), {
-            uid: user.uid, // Store uid
+          // Add member details to Firestore using email as document ID
+          await setDoc(doc(db, "members", email), {
             id,
             name,
             email,
             position,
             photo: "", // Keeping this empty as per your earlier implementation
+            password: "", // Add empty password field
           });
 
           Swal.fire({
             title: "Success",
-            text: "Member has been added successfully! A verification email has been sent.",
+            text: "Member has been added successfully!",
             width: 400,
             timer: 2000,
             timerProgressBar: true,
@@ -243,7 +224,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
             </div>
 
             <p className="text-sm text-gray-500 text-center">
-              Registered members will receive an email verification link.
+              Members will be added to the database.
             </p>
           </div>
         </div>

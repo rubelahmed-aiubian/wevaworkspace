@@ -13,7 +13,7 @@ export default function Members() {
   const [filter, setFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
   const membersPerPage = 20;
 
   // Function to fetch and set members
@@ -55,7 +55,7 @@ export default function Members() {
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-gray-900 text-white px-4 py-2 rounded"
-          // disabled={loading}
+          disabled={loading}
         >
           Add Member
         </button>
@@ -88,7 +88,6 @@ export default function Members() {
         </thead>
         <tbody>
           {loading ? (
-            // Skeleton loaders when loading
             Array.from({ length: 5 }).map((_, index) => (
               <tr key={index} className="text-center">
                 <td className="border-b border-gray-200 p-2">

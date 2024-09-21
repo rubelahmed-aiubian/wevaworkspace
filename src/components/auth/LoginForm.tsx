@@ -2,28 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import Image from "next/image";
 import Link from "next/link";
-import { auth } from "../../utils/firebase";
+import { db } from "../../utils/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import bcrypt from "bcryptjs"; // Import bcrypt for password hashing
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
-  const [rememberMe, setRememberMe] = useState(false); // State for "Remember me" checkbox
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
   // Check localStorage for saved credentials on component mount
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail");
-    const savedPassword = localStorage.getItem("savedPassword");
     const isRemembered = localStorage.getItem("rememberMe");
 
-    if (savedEmail && savedPassword && isRemembered) {
+    if (savedEmail && isRemembered) {
       setEmail(savedEmail);
-      setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -32,23 +31,36 @@ export default function LoginForm() {
     e.preventDefault();
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      
-      if (rememberMe) {
-        // Save email and password to localStorage
-        localStorage.setItem("savedEmail", email);
-        localStorage.setItem("savedPassword", password);
-        localStorage.setItem("rememberMe", true);
-      } else {
-        // Clear localStorage if "Remember me" is not checked
-        localStorage.removeItem("savedEmail");
-        localStorage.removeItem("savedPassword");
-        localStorage.removeItem("rememberMe");
-      }
+      // Fetch user data from Firestore
+      const userDocRef = doc(db, "members", email); // Assuming the document ID is the email
+      const userDoc = await getDoc(userDocRef);
 
-      router.push("/dashboard");
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+
+        // Use bcrypt to compare hashed password
+        const passwordMatch = await bcrypt.compare(password, userData.password);
+        if (passwordMatch) {
+          // Save email to localStorage if "Remember me" is checked
+          if (rememberMe) {
+            localStorage.setItem("savedEmail", email);
+            localStorage.setItem("rememberMe", true);
+          } else {
+            localStorage.removeItem("savedEmail");
+            localStorage.removeItem("rememberMe");
+          }
+
+          // Navigate to dashboard
+          router.push("/dashboard");
+        } else {
+          setError("Invalid email or password.");
+        }
+      } else {
+        setError("User not found.");
+      }
     } catch (err) {
-      setError("Invalid email or password.");
+      setError("An error occurred during login.");
+      console.error(err);
     }
   };
 
@@ -69,7 +81,7 @@ export default function LoginForm() {
               width={80}
               height={60}
               className="object-contain"
-              priority // Added the priority property to handle LCP warning
+              priority
             />
           </div>
           <div className="font-semibold text-center text-gray-700 mt-6">
@@ -90,7 +102,7 @@ export default function LoginForm() {
 
           <div className="relative mb-6">
             <input
-              type={showPassword ? "text" : "password"} // Toggle between text and password
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password..."
@@ -100,7 +112,7 @@ export default function LoginForm() {
               className="absolute right-3 top-3 cursor-pointer text-gray-500"
               onClick={togglePasswordVisibility}
             >
-              {showPassword ? "🙈" : "👁️"} {/* Eye icon */}
+              {showPassword ? "🙈" : "👁️"}
             </span>
             {error && (
               <p className="text-red-500 text-center mt-2">{error}</p>

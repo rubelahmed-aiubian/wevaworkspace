@@ -11,14 +11,16 @@ import {
 } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
+import Image from "next/image";
 
 export default function Sidebar() {
   const router = useRouter();
   const { isSidebarOpen, toggleSidebar } = useSidebar();
 
   const handleNavigation = (path: string) => {
-    if(path === "dashboard"){router.push(`/${path}`)}
-    else{
+    if (path === "dashboard") {
+      router.push(`/${path}`);
+    } else {
       router.push(`/dashboard/${path}`);
     }
   };
@@ -35,7 +37,15 @@ export default function Sidebar() {
         } border-b border-gray-700`}
       >
         {isSidebarOpen && (
-          <img src="/images/logo.png" alt="Logo" className="w-10" />
+          <Image
+            src="/images/logo.png"
+            alt="Logo"
+            width={30}
+            height={20}
+            className="object-contain"
+            style={{ width: "auto", height: "auto" }}
+            priority
+          />
         )}
         <button onClick={toggleSidebar} className="text-xl">
           <FaBars />

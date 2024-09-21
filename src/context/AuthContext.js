@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "../utils/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext(null);
@@ -10,28 +9,30 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        
-        // Fetch user data from Firestore 'members' collection
-        const userDocRef = doc(db, "members", user.uid);
+    const checkUser = async () => {
+      const savedEmail = localStorage.getItem("savedEmail");
+      if (savedEmail) {
+        // Fetch user data from Firestore using the saved email as the document ID
+        const userDocRef = doc(db, "members", savedEmail);
         const userDoc = await getDoc(userDocRef);
-        
+
         if (userDoc.exists()) {
-          setUserData(userDoc.data());
+          setUser(savedEmail); // Set the email as the user
+          setUserData(userDoc.data()); // Set the user data
+        } else {
+          console.log("No user data found for:", savedEmail);
         }
       } else {
         setUser(null);
         setUserData(null);
       }
-      setLoading(false); // Set loading to false after checking auth state
-    });
+      setLoading(false);
+    };
 
-    return () => unsubscribe();
+    checkUser();
   }, []);
 
   return (

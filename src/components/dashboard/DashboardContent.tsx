@@ -2,7 +2,7 @@ export default function DashboardContent (){
   return (
     <div className="p-6 flex-1 overflow-auto">
       <div>
-        <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="grid sm:grid-cols-3 gap-6 mb-6">
           <div className="bg-white border-2 border-solid border-gray-700 p-6 rounded-lg text-center">
             <h3 className="text-lg font-bold">My Task</h3>
             <p className="text-2xl">12</p>
@@ -16,7 +16,7 @@ export default function DashboardContent (){
             <p className="text-2xl">4</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-3 gap-6">
           <div className="bg-white border-2 border-solid border-gray-700 p-6 rounded-lg">
             <h3 className="text-sm font-bold mb-4">Recent Task</h3>
             <ul>
