@@ -63,7 +63,7 @@ export default function Header() {
           >
             {/* Ensure userData exists before rendering the image and name */}
             <img
-              src={"/images/" + userData?.photo || "/images/user.png"}
+              src={userData?.photo ? `/images/users/${userData.photo}` : "/images/users/user.png"}
               alt="User"
               className="w-8 h-8 rounded-full object-cover"
             />

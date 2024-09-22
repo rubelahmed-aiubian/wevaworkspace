@@ -112,7 +112,7 @@ export default function Members() {
               <tr key={index} className="text-center">
                 <td className="border-b border-gray-200 p-2">
                   <img
-                    src={`/images/${member.photo ? member.photo : 'user.png'}`}
+                    src={`/images/users/${member.photo ? member.photo : 'user.png'}`}
                     alt={member.name}
                     className="w-10 h-10 rounded-full object-cover mx-auto"
                   />

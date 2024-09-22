@@ -4,9 +4,14 @@ import React, { useState } from "react";
 import Swal from "sweetalert2";
 import { db } from "../../utils/firebase";
 import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
+import bcrypt from 'bcryptjs';
 
-// Function to validate email format
 const validateEmail = (email) => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
+
+// Function to generate a random 8-character password
+const generateRandomPassword = () => {
+  return Math.random().toString(36).slice(-8);
+};
 
 export default function AddMember({ onClose, onMemberAdded }) {
   const [id, setId] = useState("");
@@ -76,6 +81,12 @@ export default function AddMember({ onClose, onMemberAdded }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // Generate random password
+          const password = generateRandomPassword();
+
+          // Hash the password using bcryptjs
+          const hashedPassword = await bcrypt.hash(password, 10); // Hashing with saltRounds = 10
+
           // Add member details to Firestore using email as document ID
           await setDoc(doc(db, "members", email), {
             id,
@@ -83,12 +94,25 @@ export default function AddMember({ onClose, onMemberAdded }) {
             email,
             position,
             photo: "", // Keeping this empty as per your earlier implementation
-            password: "", // Add empty password field
+            password: hashedPassword,  // Save the hashed password
+          });
+
+          // Send email with the plain text password (using fetch)
+          await fetch("/api/send-reset-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              name,
+              password,  // Send the plain text password in the email
+            }),
           });
 
           Swal.fire({
             title: "Success",
-            text: "Member has been added successfully!",
+            text: "Member has been added and email sent successfully!",
             width: 400,
             timer: 2000,
             timerProgressBar: true,
@@ -105,7 +129,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
           console.error("Error adding member:", error);
           Swal.fire({
             title: "Error",
-            text: "Failed to add member.",
+            text: "Failed to add member or send email.",
             icon: "error",
             confirmButtonColor: "#02122b",
           });

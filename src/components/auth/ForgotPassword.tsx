@@ -6,6 +6,9 @@ import React, { useState, useEffect } from "react";
 import { db } from "../../utils/firebase";
 import { useRouter } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { IoIosRefreshCircle } from "react-icons/io";
+import { IoReturnDownBack } from "react-icons/io5";
+
 import {
   collection,
   query,
@@ -164,40 +167,27 @@ export default function ForgotPassword() {
                 error ? "border-red-500" : "border-gray-300"
               } rounded-lg mb-4`}
             />
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-sm">
+                Resend Code in: {resendDisabled ? `${timer}s` : "00s"}
+              </p>
+
+              {/* Icon replacing the button */}
+              <IoIosRefreshCircle
+                onClick={!resendDisabled ? handleSendResetCode : null}
+                className={`text-2xl cursor-pointer ${
+                  resendDisabled
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-teal-400"
+                }`}
+              />
+            </div>
             <button
               onClick={handleVerifyCode}
               className="w-full bg-teal-500 text-white p-3 rounded-lg mb-4"
             >
               Verify Code
             </button>
-            <div className="flex justify-between items-center">
-              <p className="text-sm">
-                {resendDisabled ? `Resend code in ${timer}s` : ""}
-              </p>
-              <button
-                onClick={handleSendResetCode}
-                disabled={resendDisabled}
-                className={`flex items-center ${
-                  resendDisabled ? "bg-gray-400" : "bg-teal-500"
-                } text-white p-2 rounded-lg`}
-              >
-                <svg
-                  className="w-4 h-4 mr-1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16m-7 6h7"
-                  />
-                </svg>
-                Resend Code
-              </button>
-            </div>
           </>
         )}
 
@@ -221,6 +211,14 @@ export default function ForgotPassword() {
             </button>
           </>
         )}
+        <p className="text-center mt-4">
+          <Link
+            href="/login"
+            className="flex justify-center items-center text-teal-500 hover:text-black no-underline"
+          >
+            <IoReturnDownBack className="mr-1" /> Back to login page
+          </Link>
+        </p>
       </div>
     </div>
   );

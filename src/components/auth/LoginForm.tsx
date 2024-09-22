@@ -19,10 +19,12 @@ export default function LoginForm() {
   // Check localStorage for saved credentials on component mount
   useEffect(() => {
     const savedEmail = localStorage.getItem("savedEmail");
+    const savedPassword = localStorage.getItem("savedPassword");
     const isRemembered = localStorage.getItem("rememberMe");
 
-    if (savedEmail && isRemembered) {
+    if (savedEmail && savedPassword && isRemembered) {
       setEmail(savedEmail);
+      setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -44,6 +46,7 @@ export default function LoginForm() {
           // Save email to localStorage if "Remember me" is checked
           if (rememberMe) {
             localStorage.setItem("savedEmail", email);
+            localStorage.setItem("savedPassword", password);
             localStorage.setItem("rememberMe", true);
           } else {
             localStorage.removeItem("savedEmail");
@@ -114,9 +117,7 @@ export default function LoginForm() {
             >
               {showPassword ? "🙈" : "👁️"}
             </span>
-            {error && (
-              <p className="text-red-500 text-center mt-2">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-center mt-2">{error}</p>}
           </div>
 
           <div className="mb-6 flex items-center">
@@ -144,11 +145,25 @@ export default function LoginForm() {
           </button>
 
           <div className="mt-4 text-center">
-            <Link href="/forgot-password" className="text-teal-500 hover:text-gray-800">
+            <Link
+              href="/forgot-password"
+              className="text-teal-500 hover:text-gray-800"
+            >
               Forgot Password?
             </Link>
           </div>
         </form>
+        <div className="mt-4 text-center text-gray-600 text-sm">
+          <p>
+            &copy; 2024{" "}
+            <Link
+              href="https://wevaapp.com"
+              className="text-blue-500 hover:text-gray-800"
+            >
+              Weva Trading And Services LLC
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
