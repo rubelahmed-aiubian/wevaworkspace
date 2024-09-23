@@ -62,7 +62,7 @@ export default function ForgotPassword() {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     try {
-      const response = await fetch("/api/send-reset-email", {
+      const response = await fetch("/api/send-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

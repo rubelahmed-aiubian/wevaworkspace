@@ -1,7 +1,4 @@
 "use client";
-
-import React, { useRef, useState, useEffect } from "react";
-import { FaCheck, FaFilter, FaSort, FaChevronRight } from "react-icons/fa";
 import { db } from "@/utils/firebase";
 import {
   collection,
@@ -13,39 +10,47 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import Skeleton from "react-loading-skeleton";
+import { useAuth } from "@/context/AuthContext";
+import React, { useRef, useState, useEffect } from "react";
+import { FaCheck, FaFilter, FaSort, FaChevronRight } from "react-icons/fa";
 
 export default function MyList() {
   const { user } = useAuth();
   const taskInputRef = useRef(null);
   const [task, setTask] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [dueDate, setDueDate] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [statusFilter, setStatusFilter] = useState("");
   const [collaborator, setCollaborator] = useState("");
   const [collaboratorOptions, setCollaboratorOptions] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState("desc"); // Default to descending
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 5; //items per page
   const LOCAL_STORAGE_KEY = `tasks_${user}`;
 
+  const router = useRouter();
+  //add buttoon
   const handleAddTaskClick = () => {
     if (taskInputRef.current) {
       taskInputRef.current.focus();
     }
   };
-
+  //load from loal storage for instant display
   const loadTasksFromLocalStorage = () => {
     const localTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
     return localTasks ? JSON.parse(localTasks) : [];
   };
-
+  //save to local storage
   const saveTasksToLocalStorage = (tasksList) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasksList));
   };
-
+  //Loading Tasklist
   useEffect(() => {
     const fetchTasks = async () => {
       if (!user) return;
@@ -67,7 +72,13 @@ export default function MyList() {
           tasksList.push({ id: doc.id, ...doc.data() });
         });
 
-        tasksList = sortTasks(tasksList); // Sort tasks from Firestore
+        // Sort tasks from Firestore
+        tasksList = sortTasks(tasksList);
+
+        // Filter tasks by status if a status is selected
+        if (statusFilter) {
+          tasksList = tasksList.filter((task) => task.status === statusFilter);
+        }
 
         setTasks(tasksList);
         saveTasksToLocalStorage(tasksList);
@@ -79,8 +90,9 @@ export default function MyList() {
     };
 
     fetchTasks();
-  }, [user, sortOrder]);
+  }, [user, sortOrder, statusFilter]);
 
+  //Fetching collaborators
   useEffect(() => {
     const fetchCollaborators = async () => {
       try {
@@ -104,7 +116,7 @@ export default function MyList() {
 
     fetchCollaborators();
   }, []);
-
+  //Pressing enter to submit
   const handleTaskSubmit = async (e) => {
     if (e.key === "Enter" && task.trim()) {
       const newTask = {
@@ -146,36 +158,56 @@ export default function MyList() {
       }
     }
   };
-
+  //pagination control
   const handleNextPage = () => {
     if (currentPage < Math.ceil(tasks.length / itemsPerPage)) {
-      setCurrentPage((prev) => prev + 1);
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      router.push(`/dashboard/mylist?page=${nextPage}`); // Update URL
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+      const prevPage = currentPage - 1;
+      setCurrentPage(prevPage);
+      router.push(`/dashboard/mylist?page=${prevPage}`); // Update URL
     }
   };
-
   // Paginate tasks
   const paginatedTasks = tasks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Changing sorting
+  // Changing toggle
   const handleSortToggle = () => {
     setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
   };
 
+  //sort fucntion
   const sortTasks = (tasks) => {
     return tasks.sort((a, b) => {
       return sortOrder === "desc"
         ? new Date(b.createdAt) - new Date(a.createdAt)
         : new Date(a.createdAt) - new Date(b.createdAt);
     });
+  };
+
+  //complete task
+  const handleCompleteTask = async (taskId) => {
+    const updatedTasks = tasks.map((task) =>
+      task.id === taskId ? { ...task, status: "Completed" } : task
+    );
+    setTasks(updatedTasks);
+    saveTasksToLocalStorage(updatedTasks);
+
+    try {
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await setDoc(taskDocRef, { status: "Completed" }, { merge: true });
+    } catch (error) {
+      console.error("Error updating task: ", error);
+    }
   };
 
   return (
@@ -189,7 +221,13 @@ export default function MyList() {
         </button>
         <div className="flex items-center gap-4">
           <FaFilter />
-          <select className="p-2 border border-gray-300 rounded">
+          <select
+            className="p-2 border border-gray-300 rounded"
+            value={statusFilter} // Bind to state
+            onChange={(e) => setStatusFilter(e.target.value)} // Update filter on change
+          >
+            <option value="">All</option>{" "}
+            {/* This will represent the "All" option */}
             <option value="In Queue">In Queue</option>
             <option value="Completed">Completed</option>
           </select>
@@ -230,7 +268,10 @@ export default function MyList() {
         <thead className="text-left">
           <tr>
             <th className="border-gray-300 font-semibold p-2 w-6/12 flex items-center">
-              <FaSort className="mr-1 cursor-pointer" onClick={handleSortToggle} />
+              <FaSort
+                className="mr-1 cursor-pointer"
+                onClick={handleSortToggle}
+              />
               Task
             </th>
             <th className="border-gray-300 font-semibold p-2 w-2/12 text-left">
@@ -247,20 +288,17 @@ export default function MyList() {
         <tbody>
           {loading ? (
             Array.from({ length: 5 }).map((_, index) => (
-              <tr key={index} className="text-center">
+              <tr key={index} className="text-left">
                 <td className="border-t border-gray-200 p-2">
-                  <Skeleton circle={true} height={40} width={40} />
+                  <Skeleton height={20} width={300} />
                 </td>
                 <td className="border-t border-gray-200 p-2">
                   <Skeleton height={20} width={120} />
                 </td>
                 <td className="border-t border-gray-200 p-2">
-                  <Skeleton height={20} width={180} />
+                  <Skeleton height={20} width={120} />
                 </td>
-                <td className="border-t border-gray-200 p-2">
-                  <Skeleton height={20} width={160} />
-                </td>
-                <td className="border-t border-gray-200 p-2">
+                <td className="border-t border-gray-200 p-2 text-center">
                   <Skeleton height={20} width={30} />
                 </td>
               </tr>
@@ -278,8 +316,21 @@ export default function MyList() {
             paginatedTasks.map((task, index) => (
               <tr key={index} className="text-center">
                 <td className="border-t border-gray-200 p-2 text-left">
-                  <FaCheck className="text-gray-700 bg-gray-200 rounded-full p-1 text-xl cursor-pointer inline" />
-                  <span className="ml-2">{task.taskDescription}</span>
+                  <FaCheck
+                    className={`${
+                      task.status === "Completed"
+                        ? "bg-teal-500 text-white"
+                        : "text-gray-700 bg-gray-200 hover:bg-teal-500 hover:text-white"
+                    } rounded-full p-1 text-xl cursor-pointer inline`}
+                    onClick={() => handleCompleteTask(task.id)}
+                  />
+                  <span className="ml-2">
+                    {task.status === "Completed" ? (
+                      <del>{task.taskDescription}</del>
+                    ) : (
+                      task.taskDescription
+                    )}
+                  </span>
                 </td>
                 <td className="border-t border-gray-200 p-2 text-left">
                   {task.dueDate}
@@ -290,7 +341,13 @@ export default function MyList() {
                   </span>
                 </td>
                 <td className="border-t border-gray-200 p-2 text-left">
-                  <FaChevronRight className="cursor-pointer bg-teal-600 p-2 text-3xl text-white mx-auto" />
+                  <FaChevronRight
+                    className="cursor-pointer bg-teal-500 p-2 text-3xl text-white mx-auto"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setIsDrawerOpen(true);
+                    }}
+                  />
                 </td>
               </tr>
             ))
@@ -298,6 +355,36 @@ export default function MyList() {
         </tbody>
       </table>
 
+      {/* ---------Single List Drawer----------- */}
+      <div
+        className={`fixed inset-0 ${
+          isDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsDrawerOpen(false)}
+      />
+      <div
+        className={`fixed right-0 top-16 w-3/4 md:w-1/3 bg-white h-full shadow-md transition-transform transform z-10 ${
+          isDrawerOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="p-4">
+          {selectedTask ? (
+            <div>
+              <h2 className="text-lg font-semibold">
+                {selectedTask.taskDescription}
+              </h2>
+              <p>Due Date: {selectedTask.dueDate}</p>
+              <p>Collaborator: {selectedTask.collaborator}</p>
+              <p>Status: {selectedTask.status}</p>
+              {/* Add more details as needed */}
+            </div>
+          ) : (
+            <p>Select a task to view details.</p>
+          )}
+        </div>
+      </div>
+
+      {/* --------------Pagination aread----------------- */}
       <div className="flex justify-between items-center my-4 border-t border-gray-200 pt-2">
         <span>
           Page {currentPage} of {Math.ceil(tasks.length / itemsPerPage)}

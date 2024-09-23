@@ -76,18 +76,18 @@ export default function Members() {
 
       <table className="w-full border-collapse">
         <thead>
-          <tr className="text-center font-bold border-b border-gray-300">
+          <tr className="text-left font-bold border-b border-gray-300">
             <th className="p-2">Photo</th>
             <th className="p-2">Name</th>
             <th className="p-2">Email</th>
             <th className="p-2">Position</th>
-            <th className="p-2">Details</th>
+            <th className="p-2 text-center">Details</th>
           </tr>
         </thead>
         <tbody>
           {loading
             ? Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index} className="text-center">
+                <tr key={index} className="text-left">
                   <td className="border-t border-gray-200 p-2">
                     <Skeleton circle={true} height={40} width={40} />
                   </td>
@@ -106,14 +106,14 @@ export default function Members() {
                 </tr>
               ))
             : paginateMembers.map((member, index) => (
-                <tr key={index} className="text-center">
+                <tr key={index} className="text-left">
                   <td className="border-t border-gray-200 p-2">
                     <img
                       src={`/images/users/${
                         member.photo ? member.photo : "user.png"
                       }`}
                       alt={member.name}
-                      className="w-10 h-10 rounded-full object-cover mx-auto"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
                   </td>
                   <td className="border-t border-gray-200 p-2">
@@ -123,7 +123,7 @@ export default function Members() {
                     {member.email}
                   </td>
                   <td className="border-t border-gray-200 p-2">
-                    <div className="bg-gray-100 border border-gray-300 rounded-full px-4 py-2 mx-auto inline-block">
+                    <div className="bg-gray-100 border border-gray-300 rounded-full px-2 py-1 mx-auto inline-block text-sm">
                       {member.position}
                     </div>
                   </td>

@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
+import { auth } from "@/utils/firebase";
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
 import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
-import { auth } from "@/utils/firebase";
-import { signOut } from "firebase/auth";
 
 export default function Header() {
   const router = useRouter();
@@ -38,10 +38,11 @@ export default function Header() {
   // Add a check to ensure userData exists before rendering user details
   return (
     <div
-      className={`fixed top-0 right-0 h-16 bg-white shadow-md flex justify-between items-center px-4 transition-all duration-300`}
+      className={`fixed top-0 right-0 h-16 bg-white shadow-sm flex justify-between items-center px-4 transition-all duration-300`}
       style={{
         width: isSidebarOpen ? "calc(100% - 16rem)" : "calc(100% - 4rem)",
         marginLeft: isSidebarOpen ? "16rem" : "4rem",
+        zIndex: 20,
       }}
     >
       <div className="relative w-full max-w-md">

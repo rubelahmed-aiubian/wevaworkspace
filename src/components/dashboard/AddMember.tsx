@@ -98,7 +98,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
           });
 
           // Send email with the plain text password (using fetch)
-          await fetch("/api/send-reset-email", {
+          await fetch("/api/send-email", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

@@ -1,12 +1,12 @@
 "use client";
 
 import '../globals.css';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from "@/components/common/Header";
 import Sidebar from "@/components/common/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { SidebarProvider } from "@/components/common/SidebarContext";
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth(); // Now loading is tracked
