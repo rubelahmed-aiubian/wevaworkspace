@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext"; // Assuming you have AuthContex
 
 export default function Profile() {
   const { user, userData, loading } = useAuth();
-  const [photoURL, setPhotoURL] = useState("/images/user.png");
+  const [photoURL, setPhotoURL] = useState("/images/users/user.png");
   const [name, setName] = useState("");
   const [position, setPosition] = useState("");
   const [userId, setUserId] = useState("");
@@ -66,6 +66,7 @@ export default function Profile() {
   if (loading) {
     return <div>Loading...</div>;
   }
+  console.log(photoURL);
 
   return (
     <div className="flex flex-col items-center p-6">
