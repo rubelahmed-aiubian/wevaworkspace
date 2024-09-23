@@ -6,12 +6,12 @@ export async function POST(request) {
 
   // Configure your SMTP settings
   const transporter = nodemailer.createTransport({
-    host: 'mail.wevaapp.com', // Your mail server
+    host: '', // Your mail server
     port: 465, // Your SMTP port
     secure: true,
     auth: {
-      user: 'rubel.ahmed@wevaapp.com', // Your email
-      pass: '60637@weva', // Your email password
+      user: '', // Your email
+      pass: '', // Your email password
     },
   });
 
