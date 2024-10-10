@@ -1,16 +1,13 @@
-"use client";
 import { useState } from "react";
-import { auth } from "@/utils/firebase";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
-import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
+import { useAuth } from "@/context/AuthContext";
 import { FaSearch, FaBell, FaChevronDown } from "react-icons/fa";
 
 export default function Header() {
   const router = useRouter();
   const { isSidebarOpen } = useSidebar();
-  const { userData } = useAuth(); // Access userData from context
+  const { userData, logout } = useAuth(); // Access userData and logout from context
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -26,16 +23,11 @@ export default function Header() {
     closeMenu();
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+  const handleLogout = () => {
+    logout(); // Call logout from context
+    router.push("/login"); // Redirect to login page
   };
 
-  // Add a check to ensure userData exists before rendering user details
   return (
     <div
       className={`fixed top-0 right-0 h-16 bg-white shadow-sm flex justify-between items-center px-4 transition-all duration-300`}
@@ -62,7 +54,6 @@ export default function Header() {
             className="flex items-center space-x-2 cursor-pointer"
             onClick={toggleMenu}
           >
-            {/* Ensure userData exists before rendering the image and name */}
             <img
               src={userData?.photo ? `/images/users/${userData.photo}` : "/images/users/user.png"}
               alt="User"

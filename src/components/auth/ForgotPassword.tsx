@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import bcrypt from "bcryptjs";
 import Swal from "sweetalert2";
-import React, { useState, useEffect } from "react";
 import { db } from "../../utils/firebase";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcryptjs";
+import React, { useState, useEffect } from "react";
 import { IoIosRefreshCircle } from "react-icons/io";
 import { IoReturnDownBack } from "react-icons/io5";
+import { FaSpinner } from "react-icons/fa"; // Add this import
 
 import {
   collection,
@@ -19,16 +20,18 @@ import {
 } from "firebase/firestore";
 
 export default function ForgotPassword() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-  const [resetCode, setResetCode] = useState("");
-  const [verificationStage, setVerificationStage] = useState(false);
-  const [newPasswordStage, setNewPasswordStage] = useState(false);
   const [timer, setTimer] = useState(60);
-  const [resendDisabled, setResendDisabled] = useState(true);
+  const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [resendDisabled, setResendDisabled] = useState(true);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [newPasswordStage, setNewPasswordStage] = useState(false);
+  const [verificationStage, setVerificationStage] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
 
   useEffect(() => {
     if (timer > 0 && resendDisabled) {
@@ -49,6 +52,9 @@ export default function ForgotPassword() {
   };
 
   const handleSendResetCode = async () => {
+    setIsLoading(true);
+    setError("");
+
     const memberRef = collection(db, "members");
     const querySnapshot = await getDocs(
       query(memberRef, where("email", "==", email))
@@ -56,6 +62,7 @@ export default function ForgotPassword() {
 
     if (querySnapshot.empty) {
       setError("No email found. Please check and try again.");
+      setIsLoading(false);
       return;
     }
 
@@ -81,13 +88,16 @@ export default function ForgotPassword() {
 
       Swal.fire({
         title: "Success",
-        text: "A password reset code has been sent to your email.",
+        width: "400px",
         icon: "success",
+        text: "A password reset code has been sent to your email.",
         confirmButtonColor: "#02122b",
       });
     } catch (error) {
       console.error("Error:", error);
       setError("Failed to send email. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,6 +112,7 @@ export default function ForgotPassword() {
   };
 
   const handleSetNewPassword = async () => {
+    setIsSettingPassword(true);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     try {
@@ -113,8 +124,9 @@ export default function ForgotPassword() {
 
       Swal.fire({
         title: "Success",
-        text: "Your password has been reset successfully!",
+        width: "400px",
         icon: "success",
+        text: "Your password has been reset successfully!",
         confirmButtonColor: "#02122b",
       }).then(() => {
         router.push("/login");
@@ -122,6 +134,8 @@ export default function ForgotPassword() {
     } catch (error) {
       console.error("Error updating password:", error);
       setError("Error updating password. Please try again.");
+    } finally {
+      setIsSettingPassword(false);
     }
   };
 
@@ -145,12 +159,19 @@ export default function ForgotPassword() {
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <button
               onClick={handleSendResetCode}
-              disabled={isButtonDisabled}
+              disabled={isButtonDisabled || isLoading}
               className={`w-full ${
-                isButtonDisabled ? "bg-gray-400" : "bg-teal-500"
-              } text-white p-3 rounded-lg`}
+                isButtonDisabled || isLoading ? "bg-gray-400" : "bg-teal-500"
+              } text-white p-3 rounded-lg flex items-center justify-center`}
             >
-              Send Reset Code
+              {isLoading ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Sending...
+                </>
+              ) : (
+                "Send Reset Code"
+              )}
             </button>
           </>
         )}
@@ -205,9 +226,19 @@ export default function ForgotPassword() {
             />
             <button
               onClick={handleSetNewPassword}
-              className="w-full bg-teal-500 text-white p-3 rounded-lg"
+              disabled={isSettingPassword}
+              className={`w-full ${
+                isSettingPassword ? "bg-gray-400" : "bg-teal-500"
+              } text-white p-3 rounded-lg flex items-center justify-center`}
             >
-              Save New Password
+              {isSettingPassword ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save New Password"
+              )}
             </button>
           </>
         )}

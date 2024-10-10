@@ -6,12 +6,12 @@ export async function POST(request) {
 
   // Configure your SMTP settings
   const transporter = nodemailer.createTransport({
-    host: '', // Your mail server
+    host: 'mail.wevaapp.com', // Your mail server
     port: 465, // Your SMTP port
     secure: true,
     auth: {
-      user: '', // Your email
-      pass: '', // Your email password
+      user: 'rubel.ahmed@wevaapp.com', // Your email
+      pass: '60637@weva', // Your email password
     },
   });
 
@@ -24,7 +24,9 @@ export async function POST(request) {
       from: 'rubel.ahmed@wevaapp.com',
       to: email,
       subject: 'Welcome to Weva App - Your Account Details',
-      text: `Hi ${name},\n\nWelcome to Weva App! Your account has been created successfully. Here are your login details:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease log in and change your password as soon as possible.\n\nThank you!`,
+      text: `Hi ${name},\n\nWelcome to Weva App! Your account has been created successfully. Here are your login details:\n\nEmail: ${email}\nPassword: ${password}\n\nPlease log in and change your password as soon as possible.
+      Click here to login: https://wevaapp.com/login
+      \n\nThank you!`,
     };
   } else if (code) {
     // Sending the reset code email

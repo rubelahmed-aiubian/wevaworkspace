@@ -1,70 +1,33 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { db } from "../../utils/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import bcrypt from "bcryptjs"; // Import bcrypt for password hashing
+import { useAuth } from "@/context/AuthContext"; // Adjust the path as necessary
 
 export default function LoginForm() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  // Check localStorage for saved credentials on component mount
-  useEffect(() => {
-    const savedEmail = localStorage.getItem("savedEmail");
-    const savedPassword = localStorage.getItem("savedPassword");
-    const isRemembered = localStorage.getItem("rememberMe");
-
-    if (savedEmail && savedPassword && isRemembered) {
-      setEmail(savedEmail);
-      setPassword(savedPassword);
-      setRememberMe(true);
-    }
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(""); // Clear any previous errors
 
-    try {
-      // Fetch user data from Firestore
-      const userDocRef = doc(db, "members", email); // Assuming the document ID is the email
-      const userDoc = await getDoc(userDocRef);
+    const isLoggedIn = await login(email, password); // No need to pass rememberMe
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-
-        // Use bcrypt to compare hashed password
-        const passwordMatch = await bcrypt.compare(password, userData.password);
-        if (passwordMatch) {
-          // Save email to localStorage if "Remember me" is checked
-          if (rememberMe) {
-            localStorage.setItem("savedEmail", email);
-            localStorage.setItem("savedPassword", password);
-            localStorage.setItem("rememberMe", true);
-          } else {
-            localStorage.removeItem("savedEmail");
-            localStorage.removeItem("rememberMe");
-          }
-
-          // Navigate to dashboard
-          router.push("/dashboard");
-        } else {
-          setError("Invalid email or password.");
-        }
-      } else {
-        setError("User not found.");
-      }
-    } catch (err) {
-      setError("An error occurred during login.");
-      console.error(err);
+    if (isLoggedIn) {
+      router.push("/dashboard");
+    } else {
+      setError("Invalid email or password.");
     }
+
+    setIsLoading(false);
   };
 
   const togglePasswordVisibility = () => {
@@ -120,35 +83,30 @@ export default function LoginForm() {
             {error && <p className="text-red-500 text-center mt-2">{error}</p>}
           </div>
 
-          <div className="mb-6 flex items-center">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="mr-2"
-            />
-            <label htmlFor="rememberMe" className="text-gray-700">
-              Remember me
-            </label>
-          </div>
-
           <button
             type="submit"
             className={`w-full p-3 rounded-lg font-semibold transition-colors duration-300 ${
-              isButtonDisabled
+              isButtonDisabled || isLoading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-teal-500 text-white hover:bg-teal-700"
             }`}
-            disabled={isButtonDisabled}
+            disabled={isButtonDisabled || isLoading}
           >
-            Sign In
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="teal" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Signing In...
+              </span>
+            ) : (
+              "Sign In"
+            )}
           </button>
 
           <div className="mt-4 text-center">
-            <Link
-              href="/forgot-password"
-              className="text-teal-500 hover:text-gray-800"
-            >
+            <Link href="/forgot-password" className="text-teal-500 hover:text-gray-800">
               Forgot Password?
             </Link>
           </div>
@@ -156,10 +114,7 @@ export default function LoginForm() {
         <div className="mt-4 text-center text-gray-600 text-sm">
           <p>
             &copy; 2024{" "}
-            <Link
-              href="https://wevaapp.com"
-              className="text-blue-500 hover:text-gray-800"
-            >
+            <Link href="https://wevaapp.com" className="text-blue-500 hover:text-gray-800">
               Weva Trading And Services LLC
             </Link>
           </p>

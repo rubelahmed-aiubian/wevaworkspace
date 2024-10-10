@@ -23,8 +23,16 @@ const componentMapping = {
 export default function Page() {
   const { isSidebarOpen } = useSidebar();
   const pathname = usePathname();
-  const pathKey = pathname?.split("/")[2]?.toLowerCase();
-  const { component: Component, title } = componentMapping[pathKey] || { component: DashboardContent, title: "Dashboard" };
+  const pathSegments = pathname?.split("/");
+  const pathKey = pathSegments[2]?.toLowerCase();
+
+  let Component;
+  let title;
+
+  // Default to the corresponding component from the mapping
+  const componentData = componentMapping[pathKey] || { component: DashboardContent, title: "Dashboard" };
+  Component = componentData.component;
+  title = componentData.title;
 
   return (
     <div className={`flex-auto ${isSidebarOpen ? "ml-64" : "ml-16"} mt-16 transition-all duration-300`}>

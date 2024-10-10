@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import Swal from "sweetalert2";
-import { db } from "../../utils/firebase";
-import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 import bcrypt from 'bcryptjs';
+import Swal from "sweetalert2";
+import React, { useState } from "react";
+import { db } from "../../utils/firebase";
+import { useAuth } from '../../context/AuthContext'; // Import the useAuth hook
+import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 
 const validateEmail = (email) => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
 
@@ -14,6 +15,7 @@ const generateRandomPassword = () => {
 };
 
 export default function AddMember({ onClose, onMemberAdded }) {
+  const { user, userData } = useAuth(); // Use the auth context
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +28,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
     emailExists: false,
     idExists: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateFields = async () => {
     const newErrors = {
@@ -63,8 +66,22 @@ export default function AddMember({ onClose, onMemberAdded }) {
   };
 
   const handleAddMember = async () => {
+    setIsLoading(true);
     const isValid = await validateFields();
     if (!isValid) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if the user is authenticated and is an admin
+    if (!user || userData?.position !== "Admin") {
+      Swal.fire({
+        title: "Error",
+        text: "You don't have permission to add members.",
+        icon: "error",
+        confirmButtonColor: "#02122b",
+      });
+      setIsLoading(false);
       return;
     }
 
@@ -133,7 +150,11 @@ export default function AddMember({ onClose, onMemberAdded }) {
             icon: "error",
             confirmButtonColor: "#02122b",
           });
+        } finally {
+          setIsLoading(false);
         }
+      } else {
+        setIsLoading(false);
       }
     });
   };
@@ -235,9 +256,20 @@ export default function AddMember({ onClose, onMemberAdded }) {
             <div className="flex justify-center gap-4 mb-4">
               <button
                 onClick={handleAddMember}
-                className="bg-gray-800 text-white px-4 py-2 rounded"
+                className="bg-gray-800 text-white px-4 py-2 rounded flex items-center justify-center"
+                disabled={isLoading}
               >
-                Add Member
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Adding...
+                  </>
+                ) : (
+                  'Add Member'
+                )}
               </button>
               <button
                 onClick={handleCancel}
@@ -248,7 +280,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
             </div>
 
             <p className="text-sm text-gray-500 text-center">
-              Members will be added to the database.
+              Members will get login info in their email.
             </p>
           </div>
         </div>

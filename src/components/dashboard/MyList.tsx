@@ -3,18 +3,21 @@ import { db } from "@/utils/firebase";
 import {
   collection,
   doc,
-  addDoc,
   setDoc,
   getDoc,
   getDocs,
   query,
   where,
+  deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Skeleton from "react-loading-skeleton";
 import { useAuth } from "@/context/AuthContext";
 import React, { useRef, useState, useEffect } from "react";
-import { FaCheck, FaFilter, FaSort, FaChevronRight } from "react-icons/fa";
+import {FaTrash, FaCheck, FaFilter, FaSort, FaChevronRight } from "react-icons/fa";
+import SingleTaskView from './SingleTaskView';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export default function MyList() {
   const { user } = useAuth();
@@ -29,12 +32,16 @@ export default function MyList() {
   const [collaborator, setCollaborator] = useState("");
   const [collaboratorOptions, setCollaboratorOptions] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
-
-  const itemsPerPage = 5; //items per page
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDrawerLoading, setIsDrawerLoading] = useState(false);
+  const [drawerTask, setDrawerTask] = useState(null);
+  const [lastTaskId, setLastTaskId] = useState(0);
+  const [localTasks, setLocalTasks] = useState([]);
+  const itemsPerPage = 10; //items per page
   const LOCAL_STORAGE_KEY = `tasks_${user}`;
-
   const router = useRouter();
+  
   //add buttoon
   const handleAddTaskClick = () => {
     if (taskInputRef.current) {
@@ -43,96 +50,74 @@ export default function MyList() {
   };
   //load from loal storage for instant display
   const loadTasksFromLocalStorage = () => {
-    const localTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return localTasks ? JSON.parse(localTasks) : [];
+    const storedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return storedTasks ? JSON.parse(storedTasks) : [];
   };
   //save to local storage
   const saveTasksToLocalStorage = (tasksList) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasksList));
+    setLocalTasks(tasksList);
   };
   //Loading Tasklist
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!user) return;
+useEffect(() => {
+  const fetchData = async () => {
+    if (!user) return;
 
-      setLoading(true);
+    try {
+      // Fetch tasks
       let localTasks = loadTasksFromLocalStorage();
-      localTasks = sortTasks(localTasks); // Sort local tasks
+      if (localTasks.length > 0) setTasks(sortTasks(localTasks));
+      
+      const tasksRef = collection(db, "tasks", user, "userTasks");
+      const tasksSnapshot = await getDocs(tasksRef);
 
-      if (localTasks.length > 0) {
-        setTasks(localTasks);
-      }
+      let tasksList = tasksSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      tasksList = sortTasks(tasksList);
+      if (statusFilter) tasksList = tasksList.filter(task => task.status === statusFilter);
+      setTasks(tasksList);
+      saveTasksToLocalStorage(tasksList);
 
-      try {
-        const tasksRef = collection(db, "tasks", user, "userTasks");
-        const tasksSnapshot = await getDocs(tasksRef);
+      // Fetch collaborators
+      const membersRef = collection(db, "members");
+      const q = query(membersRef, where("position", "!=", "Admin"));
+      const querySnapshot = await getDocs(q);
 
-        let tasksList = [];
-        tasksSnapshot.forEach((doc) => {
-          tasksList.push({ id: doc.id, ...doc.data() });
-        });
-
-        // Sort tasks from Firestore
-        tasksList = sortTasks(tasksList);
-
-        // Filter tasks by status if a status is selected
-        if (statusFilter) {
-          tasksList = tasksList.filter((task) => task.status === statusFilter);
-        }
-
-        setTasks(tasksList);
-        saveTasksToLocalStorage(tasksList);
-      } catch (error) {
-        console.error("Error fetching tasks: ", error);
-      }
-
+      const collaboratorsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name,
+      }));
+      setCollaboratorOptions(collaboratorsList);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    fetchTasks();
-  }, [user, sortOrder, statusFilter]);
-
-  //Fetching collaborators
-  useEffect(() => {
-    const fetchCollaborators = async () => {
-      try {
-        const membersRef = collection(db, "members");
-        const q = query(membersRef, where("position", "!=", "Admin"));
-        const querySnapshot = await getDocs(q);
-
-        const collaboratorsList = [];
-        querySnapshot.forEach((doc) => {
-          collaboratorsList.push({
-            id: doc.id,
-            name: doc.data().name,
-          });
-        });
-
-        setCollaboratorOptions(collaboratorsList);
-      } catch (error) {
-        console.error("Error fetching collaborators: ", error);
-      }
-    };
-
-    fetchCollaborators();
-  }, []);
+  fetchData();
+}, [user, statusFilter, sortOrder]);
+  
   //Pressing enter to submit
-  const handleTaskSubmit = async (e) => {
+  const handleTaskSubmit = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && task.trim()) {
+      const newId = (lastTaskId % 999) + 1;
+      setLastTaskId(newId);
+
       const newTask = {
+        id: newId.toString().padStart(3, '0'),
         taskDescription: task,
-        dueDate: dueDate || new Date().toISOString().slice(0, 10),
+        dueDate: dueDate || null,
         collaborator: collaborator || null,
         status: "In Queue",
         email: user,
-        createdAt: new Date().toISOString(), // Add this line
+        createdAt: new Date().toISOString(),
       };
 
-      const updatedTasks = [newTask, ...tasks]; // Add new task at the start
+      // Update local state and storage immediately
+      const updatedTasks = [newTask, ...tasks];
       setTasks(updatedTasks);
       saveTasksToLocalStorage(updatedTasks);
 
-      // Clear input fields after updating local storage
       setTask("");
       setDueDate("");
       setCollaborator("");
@@ -152,15 +137,20 @@ export default function MyList() {
         }
 
         const tasksCollectionRef = collection(tasksDocRef, "userTasks");
-        await addDoc(tasksCollectionRef, newTask);
+        await setDoc(doc(tasksCollectionRef, newTask.id), newTask);
+        
+        // No need to update the task with a Firebase-generated ID
       } catch (error) {
         console.error("Error adding task to Firebase: ", error);
       }
     }
   };
   //pagination control
+  const isNextPageAvailable = currentPage < Math.ceil(tasks.length / itemsPerPage);
+  const isPreviousPageAvailable = currentPage > 1;
+
   const handleNextPage = () => {
-    if (currentPage < Math.ceil(tasks.length / itemsPerPage)) {
+    if (isNextPageAvailable) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
       router.push(`/dashboard/mylist?page=${nextPage}`); // Update URL
@@ -168,7 +158,7 @@ export default function MyList() {
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
+    if (isPreviousPageAvailable) {
       const prevPage = currentPage - 1;
       setCurrentPage(prevPage);
       router.push(`/dashboard/mylist?page=${prevPage}`); // Update URL
@@ -195,18 +185,173 @@ export default function MyList() {
   };
 
   //complete task
-  const handleCompleteTask = async (taskId) => {
-    const updatedTasks = tasks.map((task) =>
-      task.id === taskId ? { ...task, status: "Completed" } : task
+  const handleCompleteTask = async (taskId: string) => {
+    const taskToUpdate = tasks.find(task => task.id === taskId);
+    if (!taskToUpdate) return;
+
+    const newStatus = taskToUpdate.status === "Completed" ? "In Queue" : "Completed";
+    
+    // Update local state
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, status: newStatus } : task
     );
     setTasks(updatedTasks);
+
+    // Update drawer task if it's the current task
+    if (drawerTask && drawerTask.id === taskId) {
+      setDrawerTask({ ...drawerTask, status: newStatus });
+    }
+
+    // Update local storage
     saveTasksToLocalStorage(updatedTasks);
 
+    // Update Firestore
     try {
       const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
-      await setDoc(taskDocRef, { status: "Completed" }, { merge: true });
+      await updateDoc(taskDocRef, { status: newStatus });
     } catch (error) {
-      console.error("Error updating task: ", error);
+      console.error("Error updating task status in Firestore:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      setIsDeleting(true);
+
+      // Remove from UI
+      const updatedTasks = tasks.filter(task => task.id !== taskId);
+      setTasks(updatedTasks);
+      saveTasksToLocalStorage(updatedTasks);
+
+      // Remove from Firebase
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await deleteDoc(taskDocRef);
+
+      // Wait for a short delay before closing the drawer
+      setTimeout(() => {
+        setIsDeleting(false);
+        setIsDrawerOpen(false);
+        setSelectedTaskId(null);
+      }, 1000); // Adjust this delay as needed
+    } catch (error) {
+      console.error("Error deleting task: ", error);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleUpdateDescription = async (taskId, newDescription) => {
+    try {
+      // Update the task in the local state
+      const updatedTasks = tasks.map(task =>
+        task.id === taskId ? { ...task, taskDescription: newDescription } : task
+      );
+      setTasks(updatedTasks);
+      saveTasksToLocalStorage(updatedTasks);
+
+      // Update the task in Firebase
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await setDoc(taskDocRef, { taskDescription: newDescription }, { merge: true });
+    } catch (error) {
+      console.error("Error updating task description: ", error);
+    }
+  };
+
+  const handleUpdateDueDate = async (taskId: string, newDueDate: string | null) => {
+    try {
+      const updatedTasks = tasks.map(task =>
+        task.id === taskId ? { ...task, dueDate: newDueDate } : task
+      );
+      setTasks(updatedTasks);
+      saveTasksToLocalStorage(updatedTasks);
+
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await setDoc(taskDocRef, { dueDate: newDueDate }, { merge: true });
+    } catch (error) {
+      console.error("Error updating task due date: ", error);
+    }
+  };
+
+const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : null;
+
+const handleOpenDrawer = async (taskId: string) => {
+  setIsDrawerLoading(true);
+  setSelectedTaskId(taskId);
+  setIsDrawerOpen(true);
+
+  // First, check local storage
+  const localTask = localTasks.find(task => task.id === taskId);
+  if (localTask) {
+    // console.log("Task found in local storage:", localTask);
+    setDrawerTask(localTask);
+    setIsDrawerLoading(false);
+    return;
+  }
+
+  // If not in local storage, fetch from Firestore
+  try {
+    console.log("Fetching task with ID:", taskId);
+    const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+    const taskDocSnapshot = await getDoc(taskDocRef);
+    
+    if (taskDocSnapshot.exists()) {
+      const taskData = { id: taskDocSnapshot.id, ...taskDocSnapshot.data() };
+      console.log("Task data fetched from Firestore:", taskData);
+      setDrawerTask(taskData);
+    } else {
+      console.error("Task not found in Firestore:", taskId);
+      setDrawerTask(null);
+    }
+  } catch (error) {
+    console.error("Error fetching task:", error);
+    setDrawerTask(null);
+  } finally {
+    setIsDrawerLoading(false);
+  }
+};
+
+  const handleUpdateCollaborator = async (taskId: string, newCollaborator: string | null) => {
+    // Update local state
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, collaborator: newCollaborator } : task
+    );
+    setTasks(updatedTasks);
+
+    // Update drawer task if it's the current task
+    if (drawerTask && drawerTask.id === taskId) {
+      setDrawerTask({ ...drawerTask, collaborator: newCollaborator });
+    }
+
+    // Update local storage
+    saveTasksToLocalStorage(updatedTasks);
+
+    // Update Firestore
+    try {
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await updateDoc(taskDocRef, { collaborator: newCollaborator });
+    } catch (error) {
+      console.error("Error updating task collaborator in Firestore:", error);
+    }
+  };
+
+  const handleUpdateSummary = async (taskId: string, newSummary: string) => {
+    try {
+      // Update the task in the local state
+      const updatedTasks = tasks.map(task =>
+        task.id === taskId ? { ...task, summary: newSummary } : task
+      );
+      setTasks(updatedTasks);
+      saveTasksToLocalStorage(updatedTasks);
+
+      // Update drawer task if it's the current task
+      if (drawerTask && drawerTask.id === taskId) {
+        setDrawerTask({ ...drawerTask, summary: newSummary });
+      }
+
+      // Update the task in Firebase
+      const taskDocRef = doc(db, "tasks", user, "userTasks", taskId);
+      await setDoc(taskDocRef, { summary: newSummary }, { merge: true });
+    } catch (error) {
+      console.error("Error updating task summary: ", error);
     }
   };
 
@@ -333,20 +478,17 @@ export default function MyList() {
                   </span>
                 </td>
                 <td className="border-t border-gray-200 p-2 text-left">
-                  {task.dueDate}
+                  {task.dueDate ? formatDate(task.dueDate) : "No due date"}
                 </td>
                 <td className="border-t border-gray-200 p-2 text-left">
-                  <span className="bg-gray-300 rounded-full px-3 py-1 text-black">
+                  <span className="bg-gray-900 rounded-full px-3 py-1 text-white text-sm">
                     {task.collaborator ? task.collaborator : "None"}
                   </span>
                 </td>
                 <td className="border-t border-gray-200 p-2 text-left">
                   <FaChevronRight
                     className="cursor-pointer bg-teal-500 p-2 text-3xl text-white mx-auto"
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setIsDrawerOpen(true);
-                    }}
+                    onClick={() => handleOpenDrawer(task.id)}
                   />
                 </td>
               </tr>
@@ -360,28 +502,39 @@ export default function MyList() {
         className={`fixed inset-0 ${
           isDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={() => setIsDrawerOpen(false)}
+        onClick={() => !isDeleting && setIsDrawerOpen(false)}
       />
       <div
-        className={`fixed right-0 top-16 w-3/4 md:w-1/3 bg-white h-full shadow-md transition-transform transform z-10 ${
+        className={`fixed right-0 bottom-0 w-3/4 md:w-1/3 bg-white h-full shadow-md transition-transform transform z-10 ${
           isDrawerOpen ? "translate-x-0" : "translate-x-full"
         }`}
+        style={{
+          height: 'calc(100vh - 4rem)',
+          overflowY: 'auto'
+        }}
       >
-        <div className="p-4">
-          {selectedTask ? (
-            <div>
-              <h2 className="text-lg font-semibold">
-                {selectedTask.taskDescription}
-              </h2>
-              <p>Due Date: {selectedTask.dueDate}</p>
-              <p>Collaborator: {selectedTask.collaborator}</p>
-              <p>Status: {selectedTask.status}</p>
-              {/* Add more details as needed */}
-            </div>
-          ) : (
-            <p>Select a task to view details.</p>
-          )}
-        </div>
+        {isDeleting ? (
+          <div className="flex items-center justify-center h-full">
+            <FaTrash className="text-red-500 text-xl mr-2" />
+            <p className="text-2xl font-bold text-red-500">Deleted</p>
+            
+          </div>
+        ) : (
+          isDrawerOpen && selectedTaskId && (
+            <SingleTaskView
+              task={drawerTask}
+              isLoading={isDrawerLoading}
+              onClose={() => setIsDrawerOpen(false)}
+              onComplete={handleCompleteTask}
+              onDelete={handleDeleteTask}
+              onUpdateDescription={handleUpdateDescription}
+              onUpdateDueDate={handleUpdateDueDate}
+              onUpdateCollaborator={handleUpdateCollaborator}
+              onUpdateSummary={handleUpdateSummary}
+              collaboratorOptions={collaboratorOptions}
+            />
+          )
+        )}
       </div>
 
       {/* --------------Pagination aread----------------- */}
@@ -392,14 +545,14 @@ export default function MyList() {
         <div>
           <button
             onClick={handlePreviousPage}
-            disabled={currentPage === 1}
+            disabled={!isPreviousPageAvailable}
             className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
           >
             Previous
           </button>
           <button
             onClick={handleNextPage}
-            disabled={currentPage === Math.ceil(tasks.length / itemsPerPage)}
+            disabled={!isNextPageAvailable}
             className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50 ml-2"
           >
             Next

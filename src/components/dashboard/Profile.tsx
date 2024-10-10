@@ -6,7 +6,7 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import { db } from "@/utils/firebase";
 import { doc, updateDoc } from "firebase/firestore";
-import { useAuth } from "@/context/AuthContext"; // Assuming you have AuthContext
+import { useAuth } from "@/context/AuthContext";
 
 export default function Profile() {
   const { user, userData, loading } = useAuth();
@@ -66,7 +66,6 @@ export default function Profile() {
   if (loading) {
     return <div>Loading...</div>;
   }
-  console.log(photoURL);
 
   return (
     <div className="flex flex-col items-center p-6">
