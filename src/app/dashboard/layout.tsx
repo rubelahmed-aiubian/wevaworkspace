@@ -1,39 +1,43 @@
-//src/app/dashboard/layout.tsx
 "use client";
 
-import '../globals.css';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import "../globals.css";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/common/Header";
 import Sidebar from "@/components/common/Sidebar";
-import { AuthProvider, useAuth } from "@/context/AuthContext"; 
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { SidebarProvider } from "@/components/common/SidebarContext";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
-useEffect(() => {
-  if (!loading) {
-    if (!user) {
-      router.push('/login');
+  useEffect(() => {
+    if (!loading && userData) {
+      if (userData.position !== "Admin") {
+        setRedirecting(true);
+        router.push("/user-dashboard");
+      }
+    } else if (!user && !loading) {
+      setRedirecting(true);
+      router.push("/login");
     }
-  }
-}, [user, loading, router]);
+  }, [user, userData, loading, router]);
 
-  if (loading) {
+  if (loading || redirecting) {
     return (
       <div className="flex items-center justify-center bg-gray-800 w-full h-screen">
         <img
           src="/images/preloader.gif"
           alt="Loading..."
-          className="w-80 h-auto object-contain" // Adjust the size as needed
+          className="w-80 h-auto object-contain"
         />
       </div>
     );
   }
 
-  if (!user) {
+  if (!user || (userData && userData.position !== "Admin")) {
     return null;
   }
 
@@ -43,16 +47,18 @@ useEffect(() => {
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <Header />
-          <main className="flex-1 overflow-y-auto p-6">
-            {children}
-          </main>
+          <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>
   );
 }
 
-export default function LayoutWithAuth({ children }: { children: React.ReactNode }) {
+export default function LayoutWithAuth({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <AuthProvider>
       <DashboardLayout>{children}</DashboardLayout>

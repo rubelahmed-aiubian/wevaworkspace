@@ -1,32 +1,33 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import { NextResponse } from 'next/server';
+// src/app/api/upload-file/route.js
+
+import { promises as fs } from "fs";
+import path from "path";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
   const formData = await request.formData();
-  const file = formData.get('file');
-  const userEmail = formData.get('userEmail');
+  const file = formData.get("file");
+  const projectNo = formData.get("projectNo");
 
-  if (!file || !userEmail) {
-    return NextResponse.json({ error: 'No file uploaded or user email missing' }, { status: 400 });
+  if (!file || !projectNo) {
+    return NextResponse.json(
+      { error: "File or project number missing" },
+      { status: 400 }
+    );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const fileName = `${Date.now()}-${file.name}`;
-  const userDir = path.join(process.cwd(), 'public', 'files', userEmail);
-  const filePath = path.join(userDir, fileName);
+  const fileName = `${file.name}`;
+  const saveDir = path.join(process.cwd(), "public", "files", "project", projectNo);
+  const publicPath = `/files/project/${projectNo}/${fileName}`;
 
   try {
-    // Ensure the user directory exists
-    await fs.mkdir(userDir, { recursive: true });
+    await fs.mkdir(saveDir, { recursive: true });
+    await fs.writeFile(path.join(saveDir, fileName), buffer);
 
-    // Save the file to the local file system
-    await fs.writeFile(filePath, buffer);
-
-    const publicPath = `/files/${userEmail}/${fileName}`;
-    return NextResponse.json({ path: publicPath, filename: file.name });
+    return NextResponse.json({ path: publicPath, fileName });
   } catch (error) {
-    console.error('Error saving file:', error);
-    return NextResponse.json({ error: 'Error saving file' }, { status: 500 });
+    console.error("Error saving file:", error);
+    return NextResponse.json({ error: "Error saving file" }, { status: 500 });
   }
 }

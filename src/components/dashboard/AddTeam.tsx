@@ -1,4 +1,4 @@
-// src/components/dashboard/AddTeam.tsx
+//src/components/dashboard/AddTeam.tsx
 "use client";
 import Swal from "sweetalert2";
 import React, { useState, useEffect } from "react";
@@ -17,18 +17,18 @@ export default function AddTeam({ onClose, onTeamAdded }) {
   const { user, userData } = useAuth();
   const [teamCode, setTeamCode] = useState("");
   const [teamName, setTeamName] = useState("");
-  const [teamLeader, setTeamLeader] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // Search term for filtering members
   const [membersList, setMembersList] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]); // List of team members
   const [errors, setErrors] = useState({
     teamCode: false,
     teamName: false,
-    teamLeader: false,
     teamCodeExists: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [teamStatus, setTeamStatus] = useState("Disabled");
 
-  // Fetch members to display in the team leader dropdown
+  // Fetch members to display in the team member dropdown
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -48,7 +48,6 @@ export default function AddTeam({ onClose, onTeamAdded }) {
     const newErrors = {
       teamCode: !teamCode.trim(),
       teamName: !teamName.trim(),
-      teamLeader: !teamLeader.trim(),
       teamCodeExists: false,
     };
 
@@ -100,13 +99,16 @@ export default function AddTeam({ onClose, onTeamAdded }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          // Store only memberId in members array and set teamLeader field
+          const teamLeaderId =
+            selectedMembers.length > 0 ? selectedMembers[0].memberId : null;
+
           // Add team details to Firestore using teamCode as document ID
           await setDoc(doc(db, "teams", teamCode), {
             teamCode,
             teamName,
-            teamLeader,
-            createdBy: userData.email,
-            members: [],
+            members: selectedMembers.map((member) => member.memberId), // Store only the member IDs
+            teamLeader: teamLeaderId, // Store the selected member as the team leader
             teamStatus,
           });
 
@@ -157,6 +159,21 @@ export default function AddTeam({ onClose, onTeamAdded }) {
     onClose();
   };
 
+  // Filter members based on search term
+  const filteredMembers = membersList.filter((member) =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle selecting a member (only store memberId)
+  const handleSelectMember = (member) => {
+    const newMember = {
+      memberId: member.email, // Use the unique ID of the member document
+    };
+
+    setSelectedMembers([newMember]); // Only allow one selected member (the team leader)
+    setSearchTerm(member.name);
+  };
+
   return (
     <>
       <div
@@ -180,7 +197,8 @@ export default function AddTeam({ onClose, onTeamAdded }) {
                     ? "border-red-500"
                     : "border-gray-300"
                 } rounded`}
-                placeholder="Enter Team Code (eg. IT0001)"
+                placeholder="Enter Team Code (eg. IT001)"
+                maxLength={5}
               />
               {errors.teamCodeExists && (
                 <p className="text-red-500 text-sm">
@@ -201,21 +219,47 @@ export default function AddTeam({ onClose, onTeamAdded }) {
               />
             </div>
 
+            {/* Team Members with Search Box */}
             <div className="mb-4">
-              <select
-                value={teamLeader}
-                onChange={handleInputChange(setTeamLeader, "teamLeader")}
-                className={`mt-1 block w-full p-2 border ${
-                  errors.teamLeader ? "border-red-500" : "border-gray-300"
-                } rounded`}
-              >
-                <option value="">Select Team Leader</option>
-                {membersList.map((member) => (
-                  <option key={member.email} value={member.name}>
-                    {member.name}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mt-1 block w-full p-2 border border-gray-300 rounded"
+                placeholder="Search For Team Leader..."
+              />
+              <div className="mt-2 max-h-48 overflow-y-auto">
+                {searchTerm &&
+                  filteredMembers.map((member) => (
+                    <div
+                      key={member.email}
+                      onClick={() => handleSelectMember(member)}
+                      className={`flex items-center p-2 cursor-pointer rounded ${
+                        selectedMembers.some(
+                          (selected) => selected.email === member.email
+                        )
+                          ? "bg-gray-300"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <img
+                        src={
+                          member.photo
+                            ? `/images/users/${member.email}/${member.photo}`
+                            : "/images/users/user.png"
+                        }
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{member.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {member.position}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
 
             <div className="flex justify-center gap-4 mb-4">
@@ -226,27 +270,8 @@ export default function AddTeam({ onClose, onTeamAdded }) {
               >
                 {isLoading ? (
                   <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Adding...
+                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                    &nbsp; Adding...
                   </>
                 ) : (
                   "Add Team"

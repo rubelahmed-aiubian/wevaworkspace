@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FaTrash, FaCheck, FaTimes, FaSearch } from 'react-icons/fa';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
-import Comments from './Comments';
+//src/components/dashboard/SingleTaskView.tsx
+import React, { useState, useRef, useEffect } from "react";
+import { FaTrash, FaCheck, FaTimes, FaSearch } from "react-icons/fa";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import Comments from "@/components/common/Comments";
 
 interface SingleTaskViewProps {
   task?: {
@@ -13,8 +14,14 @@ interface SingleTaskViewProps {
     status: string;
     createdAt: string;
     dueDate?: string;
-    collaborator?: string;
-    summary?: string; // Add this line
+    collaborator?: {
+      // Change from string to object
+      id: string;
+      name: string;
+      photo: string;
+      position: string;
+    } | null; // Update this line
+    summary?: string;
   };
   isLoading: boolean;
   onClose: () => void;
@@ -22,12 +29,34 @@ interface SingleTaskViewProps {
   onDelete: (taskId: string) => void;
   onUpdateDescription: (taskId: string, newDescription: string) => void;
   onUpdateDueDate: (taskId: string, newDueDate: string | null) => void;
-  onUpdateCollaborator: (taskId: string, newCollaborator: string | null) => void;
-  collaboratorOptions: { id: string; name: string }[];
-  onUpdateSummary: (taskId: string, newSummary: string) => void; // Add this line
+  onUpdateCollaborator: (
+    taskId: string,
+    newCollaboratorId: string | null
+  ) => void;
+  collaboratorOptions: {
+    id: string;
+    name: string;
+    photo: string;
+    position: string;
+  }[];
+  onUpdateSummary: (taskId: string, newSummary: string) => void;
 }
 
-const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClose, onComplete, onDelete, onUpdateDescription, onUpdateDueDate, onUpdateCollaborator, collaboratorOptions, onUpdateSummary }) => {
+const SingleTaskView: React.FC<SingleTaskViewProps> = ({
+  task,
+  isLoading,
+  onClose,
+  onComplete,
+  onDelete,
+  onUpdateDescription,
+  onUpdateDueDate,
+  onUpdateCollaborator,
+  collaboratorOptions,
+  onUpdateSummary,
+}) => {
+  useEffect(() => {
+    console.log("SingleTaskView task prop:", task); // Log the task prop
+  }, [task]);
 
   if (isLoading) {
     return (
@@ -53,7 +82,9 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
   const isCompleted = localStatus === "Completed";
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(task.taskDescription);
-  const [dueDate, setDueDate] = useState<Date | null>(task.dueDate ? new Date(task.dueDate) : null);
+  const [dueDate, setDueDate] = useState<Date | null>(
+    task.dueDate ? new Date(task.dueDate) : null
+  );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const datePickerRef = useRef<HTMLDivElement>(null);
@@ -66,7 +97,10 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target as Node)
+      ) {
         setIsDatePickerOpen(false);
       }
     }
@@ -99,7 +133,7 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleDescriptionSave();
     }
   };
@@ -119,17 +153,21 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate();
-    const month = date.toLocaleString('default', { month: 'short' });
+    const month = date.toLocaleString("default", { month: "short" });
     return `${day} ${month}`;
   };
 
-  const [isCollaboratorPickerOpen, setIsCollaboratorPickerOpen] = useState(false);
-  const [collaboratorSearch, setCollaboratorSearch] = useState('');
+  const [isCollaboratorPickerOpen, setIsCollaboratorPickerOpen] =
+    useState(false);
+  const [collaboratorSearch, setCollaboratorSearch] = useState("");
   const collaboratorPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (collaboratorPickerRef.current && !collaboratorPickerRef.current.contains(event.target as Node)) {
+      if (
+        collaboratorPickerRef.current &&
+        !collaboratorPickerRef.current.contains(event.target as Node)
+      ) {
         setIsCollaboratorPickerOpen(false);
       }
     }
@@ -140,21 +178,34 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
     };
   }, []);
 
-  const handleCollaboratorChange = (newCollaborator: string) => {
-    onUpdateCollaborator(task.id, newCollaborator);
+  const [currentCollaborator, setCurrentCollaborator] = useState(
+    task.collaborator
+  ); // Local state for collaborator
+
+  const handleCollaboratorChange = (collaborator: {
+    id: string;
+    name: string;
+    photo: string;
+    position: string;
+  }) => {
+    // Immediately update the local state for collaborator
+    setCurrentCollaborator(collaborator); // Update local state immediately
+    onUpdateCollaborator(task.id, collaborator); // Pass the collaborator ID to the backend
     setIsCollaboratorPickerOpen(false);
-    setCollaboratorSearch('');
+    setCollaboratorSearch("");
   };
 
   const handleRemoveCollaborator = () => {
-    onUpdateCollaborator(task.id, null);
+    // Immediately update the local state for collaborator
+    setCurrentCollaborator(null); // Set collaborator to null immediately
+    onUpdateCollaborator(task.id, null); // Pass null to the backend
   };
 
-  const filteredCollaborators = collaboratorOptions.filter(
-    (c) => c.name.toLowerCase().includes(collaboratorSearch.toLowerCase())
+  const filteredCollaborators = collaboratorOptions.filter((c) =>
+    c.name.toLowerCase().includes(collaboratorSearch.toLowerCase())
   );
 
-  const [summary, setSummary] = useState(task?.summary || '');
+  const [summary, setSummary] = useState(task?.summary || "");
   const [isEditingSummary, setIsEditingSummary] = useState(false);
   const summaryInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -175,12 +226,18 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
     }
   };
 
-  const handleSummaryKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleSummaryKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSummarySave();
     }
   };
+
+  useEffect(() => {
+    //Collaborator Options
+  }, [collaboratorOptions]);
 
   return (
     <div className="flex flex-col h-full p-4">
@@ -193,7 +250,11 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
               : "bg-gray-100 text-gray-700 border border-gray-300"
           }`}
         >
-          <FaCheck className={`mr-1 ${isCompleted ? 'text-green-700' : 'text-gray-400'}`} />
+          <FaCheck
+            className={`mr-1 ${
+              isCompleted ? "text-green-700" : "text-gray-400"
+            }`}
+          />
           {isCompleted ? "Completed" : "Mark as Complete"}
         </button>
         <button
@@ -204,7 +265,7 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
           Delete
         </button>
       </div>
-      
+
       <div className="mt-4">
         <input
           ref={inputRef}
@@ -214,24 +275,30 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
           onBlur={handleDescriptionSave}
           onKeyDown={handleKeyDown}
           onClick={() => setIsEditing(true)}
-          className={`text-xl font-bold w-full bg-transparent ${
+          className={`text-xl font-bold w-full bg-transparent focus:outline-indigo-400 px-2 py-1 ${
             isEditing
-              ? 'border border-blue-500 rounded px-2 py-1'
-              : 'border-transparent hover:border-gray-300'
-          } transition-all duration-200 ease-in-out`}
+              ? "outline-indigo-600 outline-2 outline rounded px-2 py-1"
+              : "border border-transparent hover:border-gray-300"
+          }`}
           readOnly={!isEditing}
         />
       </div>
-      
+
       <div className="mt-4 space-y-2 text-sm">
-        <p className="text-gray-600 text-md"><span className='font-bold'>Task Added At:</span> {formatDate(task.createdAt)}</p>
-        
+        <p className="text-gray-600 text-md">
+          <span className="font-bold">Task Added At:</span>{" "}
+          {formatDate(task.createdAt)}
+        </p>
+
         <div className="flex items-center relative">
           <span className="text-gray-600 mr-2 font-bold">Due Date:</span>
           {dueDate ? (
-            <div className="inline-flex items-center bg-gray-900 rounded-full px-3 py-1 text-white text-md">
+            <div className="inline-flex items-center bg-gray-100 rounded-full px-3 py-1 text-black text-md">
               {formatDate(dueDate.toISOString())}
-              <button onClick={handleRemoveDueDate} className="ml-2 text-white hover:text-red-500">
+              <button
+                onClick={handleRemoveDueDate}
+                className="ml-2 text-white hover:text-red-500"
+              >
                 <FaTimes />
               </button>
             </div>
@@ -244,12 +311,12 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
                 Add Due Date
               </button>
               {isDatePickerOpen && (
-                <div 
-                  ref={datePickerRef} 
+                <div
+                  ref={datePickerRef}
                   className="absolute z-10 mt-1"
                   style={{
-                    transform: 'scale(0.9)',
-                    transformOrigin: 'top left'
+                    transform: "scale(0.9)",
+                    transformOrigin: "top left",
                   }}
                 >
                   <DatePicker
@@ -263,29 +330,43 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center relative">
           <span className="text-gray-600 mr-2 font-bold">Collaborator:</span>
-          {task.collaborator ? (
-            <div className="inline-flex items-center bg-gray-900 rounded-full px-3 py-1 text-white text-md">
-              {task.collaborator}
-              <button onClick={handleRemoveCollaborator} className="ml-2 text-white hover:text-red-500">
+          {currentCollaborator ? ( // Check local state for collaborator
+            <div className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-black text-md">
+              <img
+                src={
+                  currentCollaborator.photo
+                    ? `/images/users/${currentCollaborator.email}/${currentCollaborator.photo}`
+                    : `/images/users/user.png`
+                }
+                alt={currentCollaborator.name}
+                className="w-8 h-8 rounded-full mr-2"
+              />
+              {currentCollaborator.name}
+              <button
+                onClick={handleRemoveCollaborator}
+                className="ml-2 text-white hover:text-red-500"
+              >
                 <FaTimes />
               </button>
             </div>
           ) : (
             <div className="relative">
               <button
-                onClick={() => setIsCollaboratorPickerOpen(!isCollaboratorPickerOpen)}
+                onClick={() =>
+                  setIsCollaboratorPickerOpen(!isCollaboratorPickerOpen)
+                }
                 className="text-blue-500 hover:text-blue-700"
               >
                 Add Collaborator
               </button>
               {isCollaboratorPickerOpen && (
-                <div 
-                  ref={collaboratorPickerRef} 
+                <div
+                  ref={collaboratorPickerRef}
                   className="absolute z-10 mt-1 bg-white border border-gray-300 rounded shadow-lg"
-                  style={{ width: '200px' }} // Increased width here
+                  style={{ width: "200px" }}
                 >
                   <div className="p-2">
                     <div className="flex items-center border border-gray-300 rounded">
@@ -300,13 +381,30 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
                     </div>
                   </div>
                   <ul className="max-h-48 overflow-y-auto">
-                    {filteredCollaborators.map((collaborator) => (
+                    {filteredCollaborators.slice(0, 3).map((collaborator) => (
                       <li
                         key={collaborator.id}
-                        onClick={() => handleCollaboratorChange(collaborator.name)}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleCollaboratorChange(collaborator)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                       >
-                        {collaborator.name}
+                        <img
+                          src={
+                            collaborator.photo
+                              ? `/images/users/${collaborator.email}/${collaborator.photo}`
+                              : `/images/users/user.png`
+                          }
+                          alt={collaborator.name}
+                          className="w-8 h-8 rounded-full mr-2"
+                        />
+                        <div>
+                          <div className="font-semibold">
+                            {collaborator.name}{" "}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {collaborator.position}{" "}
+                            {/* Use the collaborator's position */}
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -315,9 +413,11 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
             </div>
           )}
         </div>
-        
+
         <div className="flex flex-col pb-4">
-          <span className="text-gray-600 font-bold mb-1">Task Description:</span>
+          <span className="text-gray-600 font-bold mb-1">
+            Task Description:
+          </span>
           <textarea
             ref={summaryInputRef}
             value={summary}
@@ -327,8 +427,8 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
             onClick={() => setIsEditingSummary(true)}
             className={`w-full p-2 rounded border ${
               isEditingSummary
-                ? 'border-blue-500'
-                : 'border-gray-300 hover:border-gray-400'
+                ? "border-blue-500"
+                : "border-gray-300 hover:border-gray-400"
             } transition-all duration-200 ease-in-out`}
             readOnly={!isEditingSummary}
             rows={2}
@@ -341,7 +441,7 @@ const SingleTaskView: React.FC<SingleTaskViewProps> = ({ task, isLoading, onClos
         </div>
       </div>
       {/* Comment Section */}
-      <Comments taskId={task.id} /> 
+      <Comments taskId={String(task.id)} />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
   FaBars,
   FaBell,
 } from "react-icons/fa";
+import { GrAnnounce } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import Image from "next/image";
@@ -59,7 +60,8 @@ export default function Sidebar() {
             { path: "projects", icon: FaProjectDiagram, label: "Projects" },
             { path: "teams", icon: FaUsers, label: "Teams" },
             { path: "members", icon: FaUserFriends, label: "Members" },
-            { path: "announcement", icon: FaBell, label: "Announcement" },
+            { path: "announcement", icon: GrAnnounce, label: "Announcement" },
+            { path: "notifications", icon: FaBell, label: "Notifications" },
           ].map((item, index) => (
             <li
               key={index}

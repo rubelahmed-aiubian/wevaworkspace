@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
-
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -52,11 +51,13 @@ export function AuthProvider({ children }) {
 
         // Only store the current user's email
         sessionStorage.setItem("currentUser", email);
+        sessionStorage.setItem("userPosition", userData.position);
         return true;
       }
     }
 
     sessionStorage.removeItem("currentUser");
+    sessionStorage.removeItem("userPosition");
     return false;
   };
 

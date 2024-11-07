@@ -1,0 +1,104 @@
+"use client";
+import {
+  FaTachometerAlt,
+  FaList,
+  FaUsers,
+  FaProjectDiagram,
+  FaCog,
+  FaBars,
+  FaBell,
+} from "react-icons/fa";
+import { GrAnnounce } from "react-icons/gr";
+import { useRouter } from "next/navigation";
+import { useSidebar } from "./SidebarContext";
+import Image from "next/image";
+
+export default function UserSidebar() {
+  const router = useRouter();
+  const { isSidebarOpen, toggleSidebar } = useSidebar();
+
+  const handleNavigation = (path: string) => {
+    if (path === "user-dashboard") {
+      router.push(`/${path}`);
+    } else {
+      router.push(`/user-dashboard/${path}`);
+    }
+  };
+
+  return (
+    <div
+      className={`fixed top-0 left-0 h-full bg-gray-800 text-white ${
+        isSidebarOpen ? "w-64" : "w-16"
+      } transition-all duration-300 flex flex-col`}
+    >
+      <div
+        className={`flex items-center justify-between ${
+          isSidebarOpen ? "p-4" : "p-5"
+        } border-b border-gray-700`}
+      >
+        {isSidebarOpen && (
+          <Image
+            src="/images/logo.png"
+            alt="Logo"
+            width={30}
+            height={20}
+            className="object-contain"
+            style={{ width: "auto", height: "auto" }}
+            priority
+          />
+        )}
+        <button onClick={toggleSidebar} className="text-xl">
+          <FaBars />
+        </button>
+      </div>
+      <nav className="flex-1 mt-4">
+        <ul>
+          {[
+            {
+              path: "user-dashboard",
+              icon: FaTachometerAlt,
+              label: "Dashboard",
+            },
+            { path: "mytasks", icon: FaList, label: "My Tasks" },
+            {
+              path: "myprojects",
+              icon: FaProjectDiagram,
+              label: "My Projects",
+            },
+            { path: "myteams", icon: FaUsers, label: "My Teams" },
+            { path: "announcement", icon: GrAnnounce, label: "Announcement" },
+            { path: "notifications", icon: FaBell, label: "Notifications" },
+          ].map((item, index) => (
+            <li
+              key={index}
+              className={`flex items-center p-4 hover:bg-gray-700 cursor-pointer ${
+                isSidebarOpen && "text-white"
+              }`}
+            >
+              <button
+                onClick={() => handleNavigation(item.path)}
+                className={`flex items-center w-full text-left`}
+              >
+                <item.icon className="mr-3" />
+                {isSidebarOpen && item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div
+        className={`p-4 border-t border-gray-700 mt-auto flex items-center justify-center hover:bg-gray-700 cursor-pointer ${
+          isSidebarOpen && "text-white"
+        }`}
+      >
+        <button
+          onClick={() => handleNavigation("changepassword")}
+          className={`flex items-center w-full text-left`}
+        >
+          <FaCog className="mr-2" />
+          {isSidebarOpen && "Change Password"}
+        </button>
+      </div>
+    </div>
+  );
+}

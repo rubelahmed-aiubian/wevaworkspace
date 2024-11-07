@@ -1,11 +1,18 @@
 "use client";
 
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import Swal from "sweetalert2";
 import React, { useState } from "react";
 import { db } from "../../utils/firebase";
-import { useAuth } from '../../context/AuthContext'; // Import the useAuth hook
-import { collection, query, where, getDocs, setDoc, doc } from "firebase/firestore";
+import { useAuth } from "../../context/AuthContext"; // Import the useAuth hook
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  doc,
+} from "firebase/firestore";
 
 const validateEmail = (email) => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
 
@@ -110,8 +117,10 @@ export default function AddMember({ onClose, onMemberAdded }) {
             name,
             email,
             position,
-            photo: "", // Keeping this empty as per your earlier implementation
-            password: hashedPassword,  // Save the hashed password
+            photo: "",
+            password: hashedPassword,
+            createdAt: new Date(),
+            status: "Pending",
           });
 
           // Send email with the plain text password (using fetch)
@@ -123,7 +132,7 @@ export default function AddMember({ onClose, onMemberAdded }) {
             body: JSON.stringify({
               email,
               name,
-              password,  // Send the plain text password in the email
+              password, // Send the plain text password in the email
             }),
           });
 
@@ -192,11 +201,14 @@ export default function AddMember({ onClose, onMemberAdded }) {
               <input
                 type="text"
                 value={id}
+                maxLength={6}
                 onChange={handleInputChange(setId, "id")}
                 className={`mt-1 block w-full p-2 border ${
-                  errors.id || errors.idExists ? "border-red-500" : "border-gray-300"
+                  errors.id || errors.idExists
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded`}
-                placeholder="Enter ID"
+                placeholder="Enter ID (e.g. IT0123)"
               />
               {errors.idExists && (
                 <p className="text-red-500 text-sm">ID is already registered</p>
@@ -246,7 +258,6 @@ export default function AddMember({ onClose, onMemberAdded }) {
                 } rounded`}
               >
                 <option value="">Select Position</option>
-                <option value="Admin">Admin</option>
                 <option value="Employee">Employee</option>
                 <option value="Developer">Developer</option>
                 <option value="Project Manager">Project Manager</option>
@@ -256,19 +267,16 @@ export default function AddMember({ onClose, onMemberAdded }) {
             <div className="flex justify-center gap-4 mb-4">
               <button
                 onClick={handleAddMember}
-                className="bg-gray-800 text-white px-4 py-2 rounded flex items-center justify-center"
+                className=" bg-gray-800 text-white px-4 py-2 rounded flex items-center justify-center"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Adding...
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    &nbsp;Adding...
                   </>
                 ) : (
-                  'Add Member'
+                  "Add Member"
                 )}
               </button>
               <button
