@@ -3,17 +3,15 @@
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { db } from "@/utils/firebase";
-import { useAuth } from "@/context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { useSidebar } from "@/components/common/SidebarContext";
-import Skeleton from "react-loading-skeleton"; // Importing Skeleton
+import Skeleton from "react-loading-skeleton";
 
 export default function AnnouncementDetail({
   params,
 }: {
   params: { announcementId: string };
 }) {
-  const { user } = useAuth();
   const router = useRouter();
   const { isSidebarOpen } = useSidebar();
   const [announcement, setAnnouncement] = useState(null);

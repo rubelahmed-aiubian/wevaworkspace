@@ -9,9 +9,11 @@ import {
   fetchNotifications,
   markNotificationAsRead,
   getUnreadNotificationsCount,
-} from "@/utils/notifications"; // Import notification functions
-import { collection, getDocs } from "firebase/firestore"; // Import collection and getDocs
-import { db } from "@/utils/firebase"; // Import db
+} from "@/utils/notifications"; 
+import { db } from "@/utils/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import Image from "next/image";
+
 
 export default function Header() {
   const router = useRouter();
@@ -234,7 +236,7 @@ export default function Header() {
 
         <div className="relative">
           <button onClick={toggleMenu} className="flex items-center space-x-1">
-            <img
+            <Image
               src={
                 userData?.photo
                   ? `/images/users/${userData.email}/${userData.photo}`

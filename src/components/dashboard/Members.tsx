@@ -6,8 +6,7 @@ import AddMember from "./AddMember";
 import { db } from "@/utils/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
-
+import Image from "next/image";
 export default function Members() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("All");
@@ -165,12 +164,14 @@ export default function Members() {
                   className="odd:bg-white even:bg-gray-50 text-left"
                 >
                   <td className="p-4 whitespace-nowrap text-sm leading-6 font-medium text-gray-900">
-                    <img
+                    <Image
                       src={`/images/users/${
                         member.photo
                           ? `${member.email}/${member.photo}`
                           : "user.png"
                       }`}
+                      width={50}
+                      height={50}
                       alt={member.name}
                       className="w-10 h-10 rounded-full object-cover"
                     />

@@ -18,13 +18,13 @@ interface AssignedTeamProps {
 
 const AssignedTeam: React.FC<AssignedTeamProps> = ({ projectNo }) => {
   const [assignedTeamCodes, setAssignedTeamCodes] = useState<string[]>([]);
-  const [assignedTeams, setAssignedTeams] = useState<any[]>([]); // Fetched team details
+  const [assignedTeams, setAssignedTeams] = useState<any[]>([]);
   const [teamPickerOpen, setTeamPickerOpen] = useState<boolean>(false);
   const [teams, setTeams] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [memberData, setMemberData] = useState<{
     [email: string]: { photo?: string };
-  }>({}); // Updated type to only include photo
+  }>({});
   const pickerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);

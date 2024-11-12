@@ -228,6 +228,8 @@ export default function MyTasks() {
                             ? `/images/users/${task.createdBy.email}/${task.createdBy.photo}`
                             : `/images/users/user.png`
                         }
+                        width={50}
+                        height={50}
                         alt={task.createdBy.name || "Assigned By"}
                         className="w-8 h-8 rounded-full mr-2"
                       />

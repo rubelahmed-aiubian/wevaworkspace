@@ -2,9 +2,9 @@
 
 import bcrypt from "bcryptjs";
 import Swal from "sweetalert2";
-import React, { useState } from "react";
-import { db } from "../../utils/firebase";
-import { useAuth } from "../../context/AuthContext"; // Import the useAuth hook
+import React, { useState, useEffect } from "react";
+import { db } from "@/utils/firebase";
+import { useAuth } from "@/context/AuthContext";
 import {
   collection,
   query,
@@ -12,6 +12,7 @@ import {
   getDocs,
   setDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 
 const validateEmail = (email) => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email);
@@ -36,6 +37,21 @@ export default function AddMember({ onClose, onMemberAdded }) {
     idExists: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const docRef = doc(db, "settings", "employee_roles");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setRoles(data.roles || []);
+      } else {
+        console.log("No such document!");
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const validateFields = async () => {
     const newErrors = {
@@ -258,9 +274,11 @@ export default function AddMember({ onClose, onMemberAdded }) {
                 } rounded`}
               >
                 <option value="">Select Position</option>
-                <option value="Employee">Employee</option>
-                <option value="Developer">Developer</option>
-                <option value="Project Manager">Project Manager</option>
+                {roles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
               </select>
             </div>
 

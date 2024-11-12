@@ -6,11 +6,12 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/utils/firebase";
 import Comments from "@/components/common/Comments";
 import { useSidebar } from "@/components/common/SidebarContext";
+import Image from "next/image";
 
 const UserTaskView = () => {
   const { taskId } = useParams();
   const { isSidebarOpen } = useSidebar();
-  const [task, setTask] = useState<any | null>(null);
+  const [task, setTask] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -78,14 +79,13 @@ const UserTaskView = () => {
         {isLoading ? (
           <Skeleton height={20} width={100} />
         ) : (
-          task.dueDate && (
-            <p className="text-gray-600 text-md font-semibold">
-              Due Date:{" "}
-              {new Intl.DateTimeFormat("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              }).format(new Date(task.dueDate))}
+          task.status && (
+            <p
+              className={`px-4 py-2 text-black rounded-md ${
+                task.status === "Completed" ? "bg-green-400" : "bg-gray-400"
+              }`}
+            >
+              {task.status}
             </p>
           )
         )}
@@ -112,6 +112,23 @@ const UserTaskView = () => {
             </div>
           )}
 
+          {isLoading ? (
+            <Skeleton height={20} width={100} />
+          ) : (
+            task.dueDate && (
+              <p className="text-gray-600 text-md font-semibold">
+                Due Date:{" "}
+                <span className="text-gray-600 font-normal">
+                  {new Intl.DateTimeFormat("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }).format(new Date(task.dueDate))}
+                </span>
+              </p>
+            )
+          )}
+
           {/* Creator Information */}
           {isLoading ? (
             <div className="inline-flex items-center rounded-full px-2 py-1 bg-gray-200">
@@ -127,12 +144,14 @@ const UserTaskView = () => {
                 <p className="text-gray-600 font-semibold">Assigned By:</p>
                 <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mt-1">
                   <div className="w-8 h-8 bg-gray-300 rounded-full mr-2 flex items-center justify-center">
-                    <img
+                    <Image
                       src={
                         task.createdBy.photo
                           ? `/images/users/${task.createdBy.email}/${task.createdBy.photo}`
                           : `/images/users/user.png`
                       }
+                      width={50}
+                      height={50}
                       alt={task.createdBy.name || "Creator"}
                       className="w-8 h-8 rounded-full"
                     />

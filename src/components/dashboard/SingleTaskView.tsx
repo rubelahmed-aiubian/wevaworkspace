@@ -45,7 +45,6 @@ interface SingleTaskViewProps {
 const SingleTaskView: React.FC<SingleTaskViewProps> = ({
   task,
   isLoading,
-  onClose,
   onComplete,
   onDelete,
   onUpdateDescription,

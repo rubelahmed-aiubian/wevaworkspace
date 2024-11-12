@@ -15,8 +15,8 @@ export default function ProjectDetailPage() {
   const projectNo = pathname?.split("/")[3];
   const { isSidebarOpen } = useSidebar();
   const { user, loading: authLoading } = useAuth();
-  const [status, setStatus] = useState();
-  const [project, setProject] = useState<any>(null);
+  const [status, setStatus] = useState("");
+  const [project, setProject] = useState(null);
   const [selectedTab, setSelectedTab] = useState("overview");
   const [timeLeft, setTimeLeft] = useState({
     days: 0,

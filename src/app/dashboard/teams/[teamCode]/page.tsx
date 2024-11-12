@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import Swal from "sweetalert2"; // Import SweetAlert
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { FiXCircle } from "react-icons/fi";
+import Image from "next/image";
 
 export default function TeamDetailPage() {
   const { isSidebarOpen } = useSidebar();
@@ -80,11 +81,10 @@ export default function TeamDetailPage() {
           setLoading(false);
         }
       }
-      console.log("Team:", team);
     };
 
     fetchTeam();
-  }, [teamCode, router]);
+  }, [teamCode, router, team]);
 
   // Search members by email or name
   useEffect(() => {
@@ -336,7 +336,7 @@ export default function TeamDetailPage() {
                         onClick={() => addMemberToTeam(member, index)}
                         className="flex items-center p-2 cursor-pointer hover:bg-gray-200"
                       >
-                        <img
+                        <Image
                           src={
                             member.photo
                               ? `/images/users/${member.photo}`
@@ -382,12 +382,14 @@ export default function TeamDetailPage() {
                     key={index}
                     className="text-center border rounded-lg p-4 mb-4 relative"
                   >
-                    <img
+                    <Image
                       src={
                         member.photo
                           ? `/images/users/${member.email}/${member.photo}`
                           : "/images/users/user.png"
                       }
+                      width={100}
+                      height={100}
                       alt="Member Photo"
                       className="bg-gray-200 rounded-full h-24 w-24 mx-auto mb-2"
                     />

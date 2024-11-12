@@ -3,6 +3,8 @@ import { useAuth } from "@/context/AuthContext";
 import React, { useState, useEffect, useRef } from "react";
 import { FaPaperclip, FaTimes } from "react-icons/fa";
 import { RxPaperPlane } from "react-icons/rx";
+import Image from "next/image";
+
 import {
   doc,
   getDoc,
@@ -13,7 +15,6 @@ import {
   orderBy,
   limit,
   Timestamp,
-  updateDoc,
   startAfter,
 } from "firebase/firestore";
 
@@ -43,14 +44,10 @@ const Comments: React.FC<CommentsProps> = ({ taskId }) => {
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (taskId && userData) fetchComments();
-  }, [taskId, userData]);
 
   const fetchComments = async () => {
     if (!taskId || !userData) {
@@ -81,6 +78,10 @@ const Comments: React.FC<CommentsProps> = ({ taskId }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (taskId && userData) fetchComments();
+  }, [taskId, userData]);
 
   const mapSnapshotToComments = async (docs: any[]) => {
     const comments = await Promise.all(
@@ -280,8 +281,10 @@ const Comments: React.FC<CommentsProps> = ({ taskId }) => {
                 key={comment.id}
                 className="flex items-center space-x-3 bg-white p-3 rounded-lg"
               >
-                <img
+                <Image
                   src={comment.userPhoto}
+                  width={50}
+                  height={50}
                   alt={comment.username}
                   className="w-8 h-8 rounded-full"
                 />
@@ -328,12 +331,14 @@ const Comments: React.FC<CommentsProps> = ({ taskId }) => {
 
       <div className="pt-2 mt-2">
         <div className="flex items-start space-x-2">
-          <img
+          <Image
             src={
               userData.photo
                 ? `/images/users/${userData.email}/${userData.photo}`
                 : "/images/users/user.png"
             }
+            width={50}
+            height={50}
             alt={userData.name}
             className="w-8 h-8 rounded-full"
           />

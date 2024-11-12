@@ -1,6 +1,6 @@
 // src/utils/notifications.js
 import { db } from "@/utils/firebase";
-import { collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 
 // Function to create a notification
 export const createNotification = async (title, targetId) => {

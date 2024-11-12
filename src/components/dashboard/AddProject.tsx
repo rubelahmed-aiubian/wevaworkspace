@@ -3,7 +3,7 @@
 import Swal from "sweetalert2";
 import { db } from "../../utils/firebase";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { collection, getDocs, setDoc, doc } from "firebase/firestore";
 

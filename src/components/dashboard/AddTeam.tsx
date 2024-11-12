@@ -2,8 +2,8 @@
 "use client";
 import Swal from "sweetalert2";
 import React, { useState, useEffect } from "react";
-import { db } from "../../utils/firebase";
-import { useAuth } from "../../context/AuthContext";
+import { db } from "@/utils/firebase";
+import { useAuth } from "@/context/AuthContext";
 import {
   collection,
   query,
@@ -12,21 +12,21 @@ import {
   setDoc,
   doc,
 } from "firebase/firestore";
+import Image from "next/image";
 
 export default function AddTeam({ onClose, onTeamAdded }) {
   const { user, userData } = useAuth();
   const [teamCode, setTeamCode] = useState("");
   const [teamName, setTeamName] = useState("");
-  const [searchTerm, setSearchTerm] = useState(""); // Search term for filtering members
+  const [searchTerm, setSearchTerm] = useState("");
   const [membersList, setMembersList] = useState([]);
-  const [selectedMembers, setSelectedMembers] = useState([]); // List of team members
+  const [selectedMembers, setSelectedMembers] = useState([]);
   const [errors, setErrors] = useState({
     teamCode: false,
     teamName: false,
     teamCodeExists: false,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [teamStatus, setTeamStatus] = useState("Disabled");
 
   // Fetch members to display in the team member dropdown
   useEffect(() => {
@@ -75,7 +75,6 @@ export default function AddTeam({ onClose, onTeamAdded }) {
       return;
     }
 
-    // Check if the user is authenticated and is an admin
     if (!user || userData?.position !== "Admin") {
       Swal.fire({
         title: "Error",
@@ -99,17 +98,15 @@ export default function AddTeam({ onClose, onTeamAdded }) {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Store only memberId in members array and set teamLeader field
           const teamLeaderId =
             selectedMembers.length > 0 ? selectedMembers[0].memberId : null;
 
-          // Add team details to Firestore using teamCode as document ID
           await setDoc(doc(db, "teams", teamCode), {
             teamCode,
             teamName,
-            members: selectedMembers.map((member) => member.memberId), // Store only the member IDs
-            teamLeader: teamLeaderId, // Store the selected member as the team leader
-            teamStatus,
+            members: selectedMembers.map((member) => member.memberId),
+            teamLeader: teamLeaderId,
+            teamStatus: "Disabled",
           });
 
           Swal.fire({
@@ -242,7 +239,7 @@ export default function AddTeam({ onClose, onTeamAdded }) {
                           : "hover:bg-gray-100"
                       }`}
                     >
-                      <img
+                      <Image
                         src={
                           member.photo
                             ? `/images/users/${member.email}/${member.photo}`

@@ -25,12 +25,6 @@ const Notifications = () => {
   const itemsPerPage = 10;
   const router = useRouter();
 
-  useEffect(() => {
-    if (userData?.email) {
-      fetchNotifications();
-    }
-  }, [userData]);
-
   const fetchNotifications = async () => {
     setLoading(true);
     try {
@@ -52,6 +46,7 @@ const Notifications = () => {
       }));
 
       setNotifications(notificationsData);
+      console.log("Notifications fetched:", notificationsData);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -59,7 +54,13 @@ const Notifications = () => {
     }
   };
 
-  const deleteNotification = async (notificationId) => {
+  useEffect(() => {
+    if (userData?.email) {
+      fetchNotifications();
+    }
+  }, [userData]);
+
+  const deleteNotification = async (notificationId: string) => {
     setDeletingId(notificationId);
     try {
       await deleteDoc(

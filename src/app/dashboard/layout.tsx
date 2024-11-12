@@ -7,6 +7,7 @@ import Header from "@/components/common/Header";
 import Sidebar from "@/components/common/Sidebar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { SidebarProvider } from "@/components/common/SidebarContext";
+import Image from "next/image";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, userData, loading } = useAuth();
@@ -28,10 +29,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (loading || redirecting) {
     return (
       <div className="flex items-center justify-center bg-gray-800 w-full h-screen">
-        <img
+        <Image
           src="/images/preloader.gif"
+          width={100}
+          height={100}
           alt="Loading..."
           className="w-80 h-auto object-contain"
+          unoptimized
         />
       </div>
     );

@@ -25,69 +25,84 @@ export default function UserDashboardContent() {
     if (!userData) return;
 
     setLoadingTasks(true);
-    const userTasksRef = collection(db, "tasks");
-    const userTasksSnapshot = await getDocs(userTasksRef);
+    try {
+      const userTasksRef = collection(db, "tasks");
+      const userTasksSnapshot = await getDocs(userTasksRef);
 
-    const userTasks = userTasksSnapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
-      .filter((task) => task.collaborator === userData.email);
+      const userTasks = userTasksSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((task) => task.collaborator === userData.email);
 
-    setRecentTasks(userTasks.slice(0, 10));
-    setTaskCount(userTasks.length); // Update task count
-    setLoadingTasks(false);
+      setRecentTasks(userTasks.slice(0, 10));
+      setTaskCount(userTasks.length); // Update task count
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoadingTasks(false); // Ensure loading state is reset
+    }
   };
 
   // Fetch projects data
   const fetchProjectsData = async () => {
     setLoadingProjects(true);
-    const projectsSnapshot = await getDocs(collection(db, "projects"));
-    const allProjects = projectsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    try {
+      const projectsSnapshot = await getDocs(collection(db, "projects"));
+      const allProjects = projectsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    // Fetch teams data to check members
-    const teamsSnapshot = await getDocs(collection(db, "teams"));
-    const allTeams = teamsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+      // Fetch teams data to check members
+      const teamsSnapshot = await getDocs(collection(db, "teams"));
+      const allTeams = teamsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    // Filter projects for the logged-in user
-    const userProjects = allProjects.filter(
-      (project) =>
-        Array.isArray(project.assignedTeam) && // Check if assignedTeam is an array
-        project.assignedTeam.some((teamId) => {
-          const team = allTeams.find((t) => t.id === teamId);
-          return team && team.members.includes(userData.email); // Check if user's email is in the team's members
-        })
-    );
+      // Filter projects for the logged-in user
+      const userProjects = allProjects.filter(
+        (project) =>
+          Array.isArray(project.assignedTeam) && // Check if assignedTeam is an array
+          project.assignedTeam.some((teamId) => {
+            const team = allTeams.find((t) => t.id === teamId);
+            return team && team.members.includes(userData.email); // Check if user's email is in the team's members
+          })
+      );
 
-    setProjectCount(userProjects.length);
-    setRecentProjects(userProjects.slice(0, 10));
-    setLoadingProjects(false);
+      setProjectCount(userProjects.length);
+      setRecentProjects(userProjects.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      setLoadingProjects(false); // Ensure loading state is reset
+    }
   };
 
   // Fetch teams data
   const fetchTeamsData = async () => {
     setLoadingTeams(true);
-    const teamsSnapshot = await getDocs(collection(db, "teams"));
-    const allTeams = teamsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    try {
+      const teamsSnapshot = await getDocs(collection(db, "teams"));
+      const allTeams = teamsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-    // Filter teams for the logged-in user
-    const userTeams = allTeams.filter(
-      (team) => team.members && team.members.includes(userData.email) // Check if user's email is in the team's members
-    );
+      // Filter teams for the logged-in user
+      const userTeams = allTeams.filter(
+        (team) => team.members && team.members.includes(userData.email) // Check if user's email is in the team's members
+      );
 
-    setTeamCount(userTeams.length);
-    setTeams(userTeams); // Set the filtered teams
-    setLoadingTeams(false);
+      setTeamCount(userTeams.length);
+      setTeams(userTeams); // Set the filtered teams
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+    } finally {
+      setLoadingTeams(false); // Ensure loading state is reset
+    }
   };
 
   useEffect(() => {

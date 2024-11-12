@@ -26,6 +26,7 @@ import {
 import { RxCross2 } from "react-icons/rx";
 import { IoCheckmark } from "react-icons/io5";
 import { v4 as uuidv4 } from "uuid"; // Import uuid
+import Image from "next/image";
 
 import SingleTaskView from "./SingleTaskView";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -94,12 +95,6 @@ export default function MyList() {
     setCollaborator("");
   };
 
-  // Load tasks from session storage
-  const loadTasksFromSessionStorage = () => {
-    const storedTasks = sessionStorage.getItem(LOCAL_STORAGE_KEY);
-    return storedTasks ? JSON.parse(storedTasks) : [];
-  };
-
   // Save to session storage
   const saveTasksToSessionStorage = (tasksList) => {
     sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasksList));
@@ -116,7 +111,7 @@ export default function MyList() {
       const tasksRef = collection(db, "tasks");
       const tasksSnapshot = await getDocs(tasksRef);
 
-      let tasksList = await Promise.all(
+      const tasksList = await Promise.all(
         tasksSnapshot.docs.map(async (doc) => {
           const taskData = { id: doc.id, ...doc.data() };
 
@@ -589,12 +584,14 @@ export default function MyList() {
                     >
                       {task.collaborator ? (
                         <>
-                          <img
+                          <Image
                             src={
                               task.collaborator.photo
                                 ? `/images/users/${task.collaborator.email}/${task.collaborator.photo}`
                                 : `/images/users/user.png`
                             }
+                            width={50}
+                            height={50}
                             alt={
                               task.collaborator.name
                                 ? task.collaborator.name
@@ -613,7 +610,7 @@ export default function MyList() {
                       )}
                     </div>
                   </td>
-                  <td className="border-t border-gray-200 p-2 flex justify-center">
+                  <td className="flex justify-center items-center border-t border-gray-200 p-2 h-16">
                     <IoCheckmark
                       className={`cursor-pointer border border-gray-300 rounded-full p-1 text-2xl hover:bg-green-500 hover:text-white transition-all duration-300 ${
                         task.status === "Completed"

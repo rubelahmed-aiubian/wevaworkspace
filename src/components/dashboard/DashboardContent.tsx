@@ -76,7 +76,7 @@ export default function DashboardContent() {
     fetchTasksData();
     fetchProjectsData();
     fetchTeamsData();
-  }, []);
+  }, [userData]);
 
   return (
     <div className="p-6 flex-1 overflow-auto">

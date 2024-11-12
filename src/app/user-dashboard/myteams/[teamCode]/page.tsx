@@ -5,6 +5,8 @@ import { db } from "@/utils/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/components/common/SidebarContext";
 import Skeleton from "react-loading-skeleton";
+import Image from "next/image";
+
 import {
   collection,
   doc,
@@ -164,7 +166,7 @@ const TeamPage = ({ params }: { params: { teamCode: string } }) => {
                 </tr>
                 <tr>
                   <td colSpan={2} className="p-2 border-b border-gray-200">
-                    <button
+                    <p
                       className={`w-full rounded py-2 text-white flex justify-center items-center ${
                         team.teamStatus === "Active"
                           ? "bg-green-500"
@@ -172,7 +174,7 @@ const TeamPage = ({ params }: { params: { teamCode: string } }) => {
                       }`}
                     >
                       {team.teamStatus || "Active"}
-                    </button>
+                    </p>
                   </td>
                 </tr>
                 <tr className="text-center">
@@ -198,12 +200,14 @@ const TeamPage = ({ params }: { params: { teamCode: string } }) => {
                     key={index}
                     className="text-center border rounded-lg p-4 mb-4 relative"
                   >
-                    <img
+                    <Image
                       src={
                         member.photoURL
                           ? `/images/users/${member.email}/${member.photoURL}`
                           : "/images/users/user.png"
                       }
+                      width={100}
+                      height={100}
                       alt="Member Photo"
                       className="bg-gray-200 rounded-full h-24 w-24 mx-auto mb-2 object-cover"
                     />

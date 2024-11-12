@@ -80,7 +80,6 @@ const ProjectComments: React.FC<ProjectCommentsProps> = ({ projectNo }) => {
       setComments(fetchedComments);
       setVisibleComments(fetchedComments);
       setHasMoreComments(fetchedComments.length === commentsToFetch);
-      console.log("comments", fetchedComments);
     } catch (error) {
       console.error("Error fetching comments:", error);
     } finally {
@@ -193,6 +192,8 @@ const ProjectComments: React.FC<ProjectCommentsProps> = ({ projectNo }) => {
                     ? `/images/users/${comment.commentBy}/${comment.commentByPhoto}`
                     : "/images/users/user.png"
                 }
+                width={50}
+                height={50}
                 alt={comment.commentByName || "User"}
                 className="w-8 h-8 rounded-full"
               />

@@ -5,8 +5,8 @@ import { db } from "@/utils/firebase";
 import ProjectComments from "@/components/dashboard/project/ProjectComment";
 import { doc, getDoc } from "firebase/firestore";
 import { useSidebar } from "@/components/common/SidebarContext";
-import { useAuth } from "@/context/AuthContext";
 import { FiFileText, FiDownload } from "react-icons/fi";
+import Image from "next/image";
 
 export default function ProjectDetails({
   params,
@@ -18,7 +18,6 @@ export default function ProjectDetails({
   const [files, setFiles] = useState([]);
   const router = useRouter();
   const { isSidebarOpen } = useSidebar();
-  const user = useAuth(); //check if user is logged in
   const { projectNo } = params;
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -202,12 +201,14 @@ export default function ProjectDetails({
                 </h3>
                 {projectManager && (
                   <div className="inline-flex items-center mt-4 gap-2 bg-gray-50 rounded-full p-1">
-                    <img
+                    <Image
                       src={
                         projectManager.photo
                           ? `/images/users/${projectManager.id}/${projectManager.photo}`
                           : "/images/users/user.png"
                       }
+                      width={50}
+                      height={50}
                       alt="Project Manager"
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -238,7 +239,7 @@ export default function ProjectDetails({
                 <table className="table-auto w-full rounded-lg overflow-hidden bg-white shadow">
                   <tbody>
                     {files.length > 0 ? (
-                      files.map((file, index) => (
+                      files.map((file) => (
                         <tr
                           key={file.path}
                           className="hover:bg-gray-50 odd:bg-white even:bg-gray-50"

@@ -27,18 +27,12 @@ export default function Page() {
   const pathSegments = pathname?.split("/");
   const pathKey = pathSegments[2]?.toLowerCase();
 
-  let Component;
-  let title;
-
-  // Default to the corresponding component from the mapping
-  const componentData = componentMapping[
-    pathKey as keyof typeof componentMapping
-  ] || {
-    component: UserDashboardContent,
-    title: "Dashboard",
-  };
-  Component = componentData.component;
-  title = componentData.title;
+  const Component =
+    componentMapping[pathKey as keyof typeof componentMapping]?.component ||
+    UserDashboardContent;
+  const title =
+    componentMapping[pathKey as keyof typeof componentMapping]?.title ||
+    "Dashboard";
 
   return (
     <div
